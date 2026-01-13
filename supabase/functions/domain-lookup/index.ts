@@ -632,7 +632,7 @@ async function performDualLookup(domain: string): Promise<any> {
     whoisError = error;
     errors.push(`WHOIS: ${error.message}`);
     return null;
-  }) : Promise.resolve(null);
+  });
 
   // 等待两个查询完成
   const [rdapResult, whoisResult] = await Promise.all([rdapPromise, whoisPromise]);
