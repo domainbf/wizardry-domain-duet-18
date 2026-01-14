@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -6,65 +5,280 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// WHOIS服务器列表
-const WHOIS_SERVERS: Record<string, string> = {
-  'sn': 'whois.nic.sn',
-  'net': 'whois.verisign-grs.com',
-  'org': 'whois.pir.org',
-  'info': 'whois.afilias.net',
-  'biz': 'whois.biz',
-  'us': 'whois.nic.us',
-  'uk': 'whois.nic.uk',
-  'de': 'whois.denic.de',
-  'fr': 'whois.afnic.fr',
-  'it': 'whois.nic.it',
-  'nl': 'whois.domain-registry.nl',
-  'be': 'whois.dns.be',
-  'ch': 'whois.nic.ch',
-  'at': 'whois.nic.at',
-  'es': 'whois.nic.es',
-  'pl': 'whois.dns.pl',
-  'ru': 'whois.tcinet.ru',
-  'cn': 'whois.cnnic.cn',
-  'jp': 'whois.jprs.jp',
-  'kr': 'whois.kr',
-  'au': 'whois.auda.org.au',
-  'ca': 'whois.cira.ca',
-  'mx': 'whois.mx',
-  'br': 'whois.registro.br',
-  'in': 'whois.inregistry.net',
-  'tw': 'whois.twnic.net.tw',
-  'sg': 'whois.sgnic.sg',
-  'hk': 'whois.hkirc.hk',
-  'th': 'whois.thnic.co.th',
-  'my': 'whois.mynic.my',
-  'id': 'whois.pandi.or.id',
-  'ph': 'whois.dot.ph',
-  'vn': 'whois.vnnic.vn',
-  'cc': 'whois.nic.cc',
-  'tv': 'whois.nic.tv',
-  'me': 'whois.nic.me',
-  'co': 'whois.nic.co',
-  'io': 'whois.nic.io',
-  'ly': 'whois.nic.ly',
-  'sc': 'whois2.afilias-grs.net',
-  'la': 'whois.nic.la',
-  'mn': 'whois.nic.mn',
-  'tel': 'whois.nic.tel',
-  'name': 'whois.nic.name',
-  'mobi': 'whois.dotmobiregistry.net',
-  'travel': 'whois.nic.travel',
-  'museum': 'whois.museum',
-  'aero': 'whois.aero',
-  'coop': 'whois.nic.coop',
-  'pro': 'whois.registrypro.pro',
-  'xxx': 'whois.nic.xxx',
-  'asia': 'whois.nic.asia',
-  'bn': 'whois.bnnic.bn'
+// 完整的WHOIS服务器列表 - 本地直连查询
+const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: string }> = {
+  // 通用顶级域名 (gTLD)
+  'com': { server: 'whois.verisign-grs.com', port: 43 },
+  'net': { server: 'whois.verisign-grs.com', port: 43 },
+  'org': { server: 'whois.pir.org', port: 43 },
+  'info': { server: 'whois.afilias.net', port: 43 },
+  'biz': { server: 'whois.biz', port: 43 },
+  'name': { server: 'whois.nic.name', port: 43 },
+  'mobi': { server: 'whois.afilias.net', port: 43 },
+  'asia': { server: 'whois.nic.asia', port: 43 },
+  'tel': { server: 'whois.nic.tel', port: 43 },
+  'jobs': { server: 'whois.nic.jobs', port: 43 },
+  'travel': { server: 'whois.nic.travel', port: 43 },
+  'xxx': { server: 'whois.nic.xxx', port: 43 },
+  'pro': { server: 'whois.registrypro.pro', port: 43 },
+  'aero': { server: 'whois.aero', port: 43 },
+  'coop': { server: 'whois.nic.coop', port: 43 },
+  'museum': { server: 'whois.museum', port: 43 },
+  
+  // 新通用顶级域名 (New gTLDs)
+  'app': { server: 'whois.nic.google', port: 43 },
+  'dev': { server: 'whois.nic.google', port: 43 },
+  'page': { server: 'whois.nic.google', port: 43 },
+  'blog': { server: 'whois.nic.blog', port: 43 },
+  'cloud': { server: 'whois.nic.cloud', port: 43 },
+  'online': { server: 'whois.nic.online', port: 43 },
+  'site': { server: 'whois.nic.site', port: 43 },
+  'store': { server: 'whois.nic.store', port: 43 },
+  'tech': { server: 'whois.nic.tech', port: 43 },
+  'xyz': { server: 'whois.nic.xyz', port: 43 },
+  'top': { server: 'whois.nic.top', port: 43 },
+  'club': { server: 'whois.nic.club', port: 43 },
+  'shop': { server: 'whois.nic.shop', port: 43 },
+  'work': { server: 'whois.nic.work', port: 43 },
+  'vip': { server: 'whois.nic.vip', port: 43 },
+  'ltd': { server: 'whois.nic.ltd', port: 43 },
+  'life': { server: 'whois.nic.life', port: 43 },
+  'live': { server: 'whois.nic.live', port: 43 },
+  'world': { server: 'whois.nic.world', port: 43 },
+  'today': { server: 'whois.nic.today', port: 43 },
+  'email': { server: 'whois.nic.email', port: 43 },
+  'icu': { server: 'whois.nic.icu', port: 43 },
+  'fun': { server: 'whois.nic.fun', port: 43 },
+  'wang': { server: 'whois.gtld.knet.cn', port: 43 },
+  'xin': { server: 'whois.gtld.knet.cn', port: 43 },
+  
+  // 国家/地区顶级域名 (ccTLD) - 亚洲
+  'cn': { server: 'whois.cnnic.cn', port: 43 },
+  'hk': { server: 'whois.hkirc.hk', port: 43 },
+  'tw': { server: 'whois.twnic.net.tw', port: 43 },
+  'jp': { server: 'whois.jprs.jp', port: 43, query: 'DOM ' },
+  'kr': { server: 'whois.kr', port: 43 },
+  'sg': { server: 'whois.sgnic.sg', port: 43 },
+  'my': { server: 'whois.mynic.my', port: 43 },
+  'th': { server: 'whois.thnic.co.th', port: 43 },
+  'id': { server: 'whois.pandi.or.id', port: 43 },
+  'ph': { server: 'whois.dot.ph', port: 43 },
+  'vn': { server: 'whois.vnnic.vn', port: 43 },
+  'in': { server: 'whois.registry.in', port: 43 },
+  'ir': { server: 'whois.nic.ir', port: 43 },
+  'ae': { server: 'whois.aeda.net.ae', port: 43 },
+  'sa': { server: 'whois.nic.net.sa', port: 43 },
+  'il': { server: 'whois.isoc.org.il', port: 43 },
+  'pk': { server: 'whois.pknic.net.pk', port: 43 },
+  'bd': { server: 'whois.btcl.net.bd', port: 43 },
+  'np': { server: 'whois.mos.com.np', port: 43 },
+  'lk': { server: 'whois.nic.lk', port: 43 },
+  'kz': { server: 'whois.nic.kz', port: 43 },
+  'uz': { server: 'whois.cctld.uz', port: 43 },
+  'mn': { server: 'whois.nic.mn', port: 43 },
+  
+  // 国家/地区顶级域名 (ccTLD) - 欧洲
+  'uk': { server: 'whois.nic.uk', port: 43 },
+  'de': { server: 'whois.denic.de', port: 43, query: '-T dn,ace ' },
+  'fr': { server: 'whois.nic.fr', port: 43 },
+  'it': { server: 'whois.nic.it', port: 43 },
+  'es': { server: 'whois.nic.es', port: 43 },
+  'nl': { server: 'whois.domain-registry.nl', port: 43 },
+  'be': { server: 'whois.dns.be', port: 43 },
+  'at': { server: 'whois.nic.at', port: 43 },
+  'ch': { server: 'whois.nic.ch', port: 43 },
+  'pl': { server: 'whois.dns.pl', port: 43 },
+  'ru': { server: 'whois.tcinet.ru', port: 43 },
+  'ua': { server: 'whois.ua', port: 43 },
+  'cz': { server: 'whois.nic.cz', port: 43 },
+  'sk': { server: 'whois.sk-nic.sk', port: 43 },
+  'hu': { server: 'whois.nic.hu', port: 43 },
+  'ro': { server: 'whois.rotld.ro', port: 43 },
+  'bg': { server: 'whois.register.bg', port: 43 },
+  'hr': { server: 'whois.dns.hr', port: 43 },
+  'rs': { server: 'whois.rnids.rs', port: 43 },
+  'si': { server: 'whois.register.si', port: 43 },
+  'gr': { server: 'whois.ics.forth.gr', port: 43 },
+  'pt': { server: 'whois.dns.pt', port: 43 },
+  'ie': { server: 'whois.iedr.ie', port: 43 },
+  'se': { server: 'whois.iis.se', port: 43 },
+  'no': { server: 'whois.norid.no', port: 43 },
+  'dk': { server: 'whois.dk-hostmaster.dk', port: 43 },
+  'fi': { server: 'whois.fi', port: 43 },
+  'ee': { server: 'whois.tld.ee', port: 43 },
+  'lv': { server: 'whois.nic.lv', port: 43 },
+  'lt': { server: 'whois.domreg.lt', port: 43 },
+  'by': { server: 'whois.cctld.by', port: 43 },
+  'md': { server: 'whois.nic.md', port: 43 },
+  'is': { server: 'whois.isnic.is', port: 43 },
+  'lu': { server: 'whois.dns.lu', port: 43 },
+  'li': { server: 'whois.nic.li', port: 43 },
+  'mc': { server: 'whois.nic.mc', port: 43 },
+  
+  // 国家/地区顶级域名 (ccTLD) - 美洲
+  'us': { server: 'whois.nic.us', port: 43 },
+  'ca': { server: 'whois.cira.ca', port: 43 },
+  'mx': { server: 'whois.mx', port: 43 },
+  'br': { server: 'whois.registro.br', port: 43 },
+  'ar': { server: 'whois.nic.ar', port: 43 },
+  'cl': { server: 'whois.nic.cl', port: 43 },
+  'co': { server: 'whois.nic.co', port: 43 },
+  'pe': { server: 'kero.yachay.pe', port: 43 },
+  've': { server: 'whois.nic.ve', port: 43 },
+  'ec': { server: 'whois.nic.ec', port: 43 },
+  'uy': { server: 'whois.nic.org.uy', port: 43 },
+  'py': { server: 'whois.nic.py', port: 43 },
+  'bo': { server: 'whois.nic.bo', port: 43 },
+  'pa': { server: 'whois.nic.pa', port: 43 },
+  'cr': { server: 'whois.nic.cr', port: 43 },
+  'gt': { server: 'whois.gt', port: 43 },
+  'hn': { server: 'whois.nic.hn', port: 43 },
+  'sv': { server: 'whois.svnet.org.sv', port: 43 },
+  'ni': { server: 'whois.nic.ni', port: 43 },
+  'do': { server: 'whois.nic.do', port: 43 },
+  'pr': { server: 'whois.nic.pr', port: 43 },
+  'jm': { server: 'whois.nic.jm', port: 43 },
+  'tt': { server: 'whois.nic.tt', port: 43 },
+  'aw': { server: 'whois.nic.aw', port: 43 },
+  
+  // 国家/地区顶级域名 (ccTLD) - 大洋洲
+  'au': { server: 'whois.auda.org.au', port: 43 },
+  'nz': { server: 'whois.srs.net.nz', port: 43 },
+  'fj': { server: 'whois.nic.fj', port: 43 },
+  'ws': { server: 'whois.website.ws', port: 43 },
+  'to': { server: 'whois.tonic.to', port: 43 },
+  'tv': { server: 'whois.nic.tv', port: 43 },
+  'nu': { server: 'whois.iis.nu', port: 43 },
+  'ck': { server: 'whois.ck-nic.org.ck', port: 43 },
+  'ki': { server: 'whois.nic.ki', port: 43 },
+  'sb': { server: 'whois.nic.net.sb', port: 43 },
+  'vu': { server: 'whois.nic.vu', port: 43 },
+  'pw': { server: 'whois.nic.pw', port: 43 },
+  'fm': { server: 'whois.nic.fm', port: 43 },
+  
+  // 国家/地区顶级域名 (ccTLD) - 非洲
+  'za': { server: 'whois.registry.net.za', port: 43 },
+  'ng': { server: 'whois.nic.net.ng', port: 43 },
+  'ke': { server: 'whois.kenic.or.ke', port: 43 },
+  'eg': { server: 'whois.ripe.net', port: 43 },
+  'ma': { server: 'whois.registre.ma', port: 43 },
+  'tn': { server: 'whois.ati.tn', port: 43 },
+  'gh': { server: 'whois.nic.gh', port: 43 },
+  'ug': { server: 'whois.co.ug', port: 43 },
+  'tz': { server: 'whois.nic.tz', port: 43 },
+  'rw': { server: 'whois.nic.rw', port: 43 },
+  'et': { server: 'whois.nic.et', port: 43 },
+  'na': { server: 'whois.na-nic.com.na', port: 43 },
+  'bw': { server: 'whois.nic.net.bw', port: 43 },
+  'mw': { server: 'whois.nic.mw', port: 43 },
+  'zm': { server: 'whois.nic.zm', port: 43 },
+  'mu': { server: 'whois.nic.mu', port: 43 },
+  're': { server: 'whois.nic.re', port: 43 },
+  'mg': { server: 'whois.nic.mg', port: 43 },
+  'sc': { server: 'whois2.afilias-grs.net', port: 43 },
+  'sn': { server: 'whois.nic.sn', port: 43 },
+  'ci': { server: 'whois.nic.ci', port: 43 },
+  'cm': { server: 'whois.netcom.cm', port: 43 },
+  'bf': { server: 'whois.nic.bf', port: 43 },
+  'ml': { server: 'whois.nic.ml', port: 43 },
+  'tg': { server: 'whois.nic.tg', port: 43 },
+  'bj': { server: 'whois.nic.bj', port: 43 },
+  'ne': { server: 'whois.nic.ne', port: 43 },
+  'gn': { server: 'whois.nic.gn', port: 43 },
+  'lr': { server: 'whois.nic.lr', port: 43 },
+  'sl': { server: 'whois.nic.sl', port: 43 },
+  'gm': { server: 'whois.nic.gm', port: 43 },
+  'gw': { server: 'whois.nic.gw', port: 43 },
+  'cv': { server: 'whois.nic.cv', port: 43 },
+  'mr': { server: 'whois.nic.mr', port: 43 },
+  'st': { server: 'whois.nic.st', port: 43 },
+  'ao': { server: 'whois.nic.ao', port: 43 },
+  'cd': { server: 'whois.nic.cd', port: 43 },
+  'cg': { server: 'whois.nic.cg', port: 43 },
+  'ga': { server: 'whois.nic.ga', port: 43 },
+  'gq': { server: 'whois.nic.gq', port: 43 },
+  'td': { server: 'whois.nic.td', port: 43 },
+  'cf': { server: 'whois.nic.cf', port: 43 },
+  'bi': { server: 'whois1.nic.bi', port: 43 },
+  'dj': { server: 'whois.nic.dj', port: 43 },
+  'er': { server: 'whois.nic.er', port: 43 },
+  'so': { server: 'whois.nic.so', port: 43 },
+  'km': { server: 'whois.nic.km', port: 43 },
+  'yt': { server: 'whois.nic.yt', port: 43 },
+  'mz': { server: 'whois.nic.mz', port: 43 },
+  'zw': { server: 'whois.nic.zw', port: 43 },
+  'sz': { server: 'whois.nic.sz', port: 43 },
+  'ls': { server: 'whois.nic.ls', port: 43 },
+  
+  // 特殊用途域名
+  'cc': { server: 'whois.nic.cc', port: 43 },
+  'me': { server: 'whois.nic.me', port: 43 },
+  'io': { server: 'whois.nic.io', port: 43 },
+  'la': { server: 'whois.nic.la', port: 43 },
+  'ly': { server: 'whois.nic.ly', port: 43 },
+  'af': { server: 'whois.nic.af', port: 43 },
+  'ai': { server: 'whois.nic.ai', port: 43 },
+  'gg': { server: 'whois.gg', port: 43 },
+  'je': { server: 'whois.je', port: 43 },
+  'im': { server: 'whois.nic.im', port: 43 },
+  'sh': { server: 'whois.nic.sh', port: 43 },
+  'ac': { server: 'whois.nic.ac', port: 43 },
+  'sx': { server: 'whois.sx', port: 43 },
+  'gs': { server: 'whois.nic.gs', port: 43 },
+  'ms': { server: 'whois.nic.ms', port: 43 },
+  'tc': { server: 'whois.nic.tc', port: 43 },
+  'vg': { server: 'whois.nic.vg', port: 43 },
+  'bz': { server: 'whois.afilias-grs.info', port: 43 },
+  'vc': { server: 'whois2.afilias-grs.net', port: 43 },
+  'lc': { server: 'whois2.afilias-grs.net', port: 43 },
+  'ag': { server: 'whois.nic.ag', port: 43 },
+  'dm': { server: 'whois.nic.dm', port: 43 },
+  'gd': { server: 'whois.nic.gd', port: 43 },
+  'kn': { server: 'whois.nic.kn', port: 43 },
+  'ky': { server: 'whois.kyregistry.ky', port: 43 },
+  'bb': { server: 'whois.telecoms.gov.bb', port: 43 },
+  'bs': { server: 'whois.nic.bs', port: 43 },
+  'ht': { server: 'whois.nic.ht', port: 43 },
+  'cu': { server: 'whois.nic.cu', port: 43 },
+  'gl': { server: 'whois.nic.gl', port: 43 },
+  'pm': { server: 'whois.nic.pm', port: 43 },
+  'wf': { server: 'whois.nic.wf', port: 43 },
+  'mq': { server: 'whois.mediaserv.net', port: 43 },
+  'gp': { server: 'whois.nic.gp', port: 43 },
+  'gf': { server: 'whois.mediaserv.net', port: 43 },
+  'nc': { server: 'whois.nc', port: 43 },
+  'pf': { server: 'whois.registry.pf', port: 43 },
+  'tf': { server: 'whois.nic.tf', port: 43 },
+  'bn': { server: 'whois.bnnic.bn', port: 43 },
+  'bt': { server: 'whois.nic.bt', port: 43 },
+  'mm': { server: 'whois.nic.mm', port: 43 },
+  'la': { server: 'whois.nic.la', port: 43 },
+  'kh': { server: 'whois.nic.kh', port: 43 },
+  'mo': { server: 'whois.monic.mo', port: 43 },
+  'tl': { server: 'whois.nic.tl', port: 43 },
+  'mv': { server: 'whois.nic.mv', port: 43 },
+  'af': { server: 'whois.nic.af', port: 43 },
+  'tm': { server: 'whois.nic.tm', port: 43 },
+  'tj': { server: 'whois.nic.tj', port: 43 },
+  'kg': { server: 'whois.kg', port: 43 },
+  'am': { server: 'whois.amnic.net', port: 43 },
+  'ge': { server: 'whois.nic.ge', port: 43 },
+  'az': { server: 'whois.az', port: 43 },
+  'cy': { server: 'whois.nic.cy', port: 43 },
+  'tr': { server: 'whois.nic.tr', port: 43 },
+  'lb': { server: 'whois.lbdr.org.lb', port: 43 },
+  'sy': { server: 'whois.tld.sy', port: 43 },
+  'jo': { server: 'whois.nic.jo', port: 43 },
+  'iq': { server: 'whois.nic.iq', port: 43 },
+  'kw': { server: 'whois.nic.kw', port: 43 },
+  'bh': { server: 'whois.nic.bh', port: 43 },
+  'qa': { server: 'whois.nic.qa', port: 43 },
+  'om': { server: 'whois.nic.om', port: 43 },
+  'ye': { server: 'whois.nic.ye', port: 43 },
+  'ps': { server: 'whois.nic.ps', port: 43 },
 };
 
-// RDAP服务器列表 - 注意：部分国别域名RDAP服务器可能无法访问
-// 对于.cn等国别域名，建议配置WHOIS API密钥作为备选方案
+// RDAP服务器列表
 const RDAP_SERVERS: Record<string, string> = {
   'com': 'https://rdap.verisign.com/com/v1',
   'net': 'https://rdap.verisign.com/net/v1',
@@ -72,12 +286,10 @@ const RDAP_SERVERS: Record<string, string> = {
   'info': 'https://rdap.afilias.net/rdap/afilias',
   'biz': 'https://rdap.afilias.net/rdap/afilias',
   'us': 'https://rdap.nic.us',
-  'af': 'https://rdap.nic.af',
   'uk': 'https://rdap.nominet.uk',
   'de': 'https://rdap.denic.de',
   'fr': 'https://rdap.nic.fr',
   'it': 'https://rdap.nic.it',
-  'ke': 'https://rdap.kenic.or.ke',
   'be': 'https://rdap.dns.be',
   'ch': 'https://rdap.nic.ch',
   'at': 'https://rdap.nic.at',
@@ -85,17 +297,17 @@ const RDAP_SERVERS: Record<string, string> = {
   'au': 'https://rdap.nic.au',
   'ca': 'https://rdap.ca',
   'jp': 'https://rdap.jprs.jp',
-  // 移除.cn的RDAP - 该服务器从Edge Function环境无法访问
-  // 'cn': 'https://rdap.cnnic.cn',
   'cc': 'https://rdap.nic.cc',
   'tv': 'https://rdap.nic.tv',
   'me': 'https://rdap.nic.me',
   'co': 'https://rdap.nic.co',
-  'io': 'https://rdap.nic.io'
+  'io': 'https://rdap.nic.io',
+  'af': 'https://rdap.nic.af',
+  'ke': 'https://rdap.kenic.or.ke',
+  'app': 'https://rdap.nic.google',
+  'dev': 'https://rdap.nic.google',
+  'page': 'https://rdap.nic.google',
 };
-
-// 不支持RDAP的TLD列表（需要依赖WHOIS API）
-const RDAP_UNSUPPORTED_TLDS = ['cn', 'tw', 'hk', 'ru', 'kr', 'br', 'mx', 'in', 'sg', 'my', 'id', 'ph', 'vn', 'th'];
 
 // 解析域名获取TLD
 function getTLD(domain: string): string {
@@ -111,21 +323,89 @@ function getTLD(domain: string): string {
     if (tld === 'au' && ['com', 'net', 'org', 'edu', 'gov', 'asn', 'id'].includes(sld)) {
       return `${sld}.${tld}`;
     }
+    if (tld === 'cn' && ['com', 'net', 'org', 'gov', 'edu', 'ac'].includes(sld)) {
+      return `${sld}.${tld}`;
+    }
     
     return tld;
   }
   return '';
 }
 
+// 直接TCP连接WHOIS服务器查询
+async function queryWhoisDirect(domain: string): Promise<string> {
+  const tld = getTLD(domain);
+  const serverInfo = WHOIS_SERVERS[tld];
+  
+  if (!serverInfo) {
+    throw new Error(`No WHOIS server found for .${tld} domains`);
+  }
+  
+  console.log(`Connecting to WHOIS server: ${serverInfo.server}:${serverInfo.port} for ${domain}`);
+  
+  try {
+    // 使用Deno的TCP连接
+    const conn = await Deno.connect({
+      hostname: serverInfo.server,
+      port: serverInfo.port,
+    });
+    
+    // 构建查询字符串
+    const queryPrefix = serverInfo.query || '';
+    const queryString = `${queryPrefix}${domain}\r\n`;
+    
+    console.log(`Sending WHOIS query: ${queryString.trim()}`);
+    
+    // 发送查询
+    const encoder = new TextEncoder();
+    await conn.write(encoder.encode(queryString));
+    
+    // 读取响应
+    const decoder = new TextDecoder();
+    const chunks: Uint8Array[] = [];
+    const buffer = new Uint8Array(4096);
+    
+    // 设置超时
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('WHOIS query timeout')), 15000);
+    });
+    
+    const readPromise = (async () => {
+      try {
+        while (true) {
+          const n = await conn.read(buffer);
+          if (n === null) break;
+          chunks.push(buffer.slice(0, n));
+        }
+      } finally {
+        conn.close();
+      }
+    })();
+    
+    await Promise.race([readPromise, timeoutPromise]);
+    
+    // 合并所有chunks
+    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    
+    const responseText = decoder.decode(result);
+    console.log(`WHOIS response received, length: ${responseText.length}`);
+    
+    return responseText;
+  } catch (error) {
+    console.error(`Direct WHOIS query failed for ${domain}:`, error.message);
+    throw error;
+  }
+}
+
 // RDAP查询
 async function queryRDAP(domain: string): Promise<any> {
   const tld = getTLD(domain);
-  
-  // 检查TLD是否在不支持RDAP的列表中
-  if (RDAP_UNSUPPORTED_TLDS.includes(tld)) {
-    throw new Error(`RDAP not available for .${tld} domains (国别域名需要使用WHOIS API查询)`);
-  }
-  
   const rdapServer = RDAP_SERVERS[tld];
   
   if (!rdapServer) {
@@ -135,14 +415,13 @@ async function queryRDAP(domain: string): Promise<any> {
   console.log(`Querying RDAP for ${domain} via ${rdapServer}`);
   
   try {
-    // 创建手动超时控制器
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     
     const response = await fetch(`${rdapServer}/domain/${domain}`, {
       headers: {
         'Accept': 'application/rdap+json',
-        'User-Agent': 'Whois-Wizardry/1.0'
+        'User-Agent': 'DomainLookup/1.0'
       },
       signal: controller.signal
     });
@@ -167,477 +446,6 @@ async function queryRDAP(domain: string): Promise<any> {
   }
 }
 
-// HTTP WHOIS查询 - 使用多个可靠的WHOIS服务
-async function queryWHOIS(domain: string): Promise<any> {
-  const tld = getTLD(domain);
-  
-  console.log(`Querying WHOIS for ${domain} via HTTP APIs`);
-  
-  // 获取可选的API密钥
-  const whoisFreaksKey = Deno.env.get('WHOISFREAKS_API_KEY') || '';
-  const ip2whoisKey = Deno.env.get('IP2WHOIS_API_KEY') || '';
-  const whoisJsonKey = Deno.env.get('WHOISJSON_API_KEY') || '';
-  
-  try {
-    // 使用多个WHOIS API服务（优先使用不需要API KEY的免费服务）
-    const whoisServices: Array<{
-      name: string;
-      url: string;
-      headers?: Record<string, string>;
-      enabled: boolean;
-      parseResponse: (data: any) => any;
-    }> = [
-      // JSONWHOIS.io - 免费无需API KEY
-      {
-        name: 'JSONWhois.io',
-        url: `https://jsonwhois.io/api/v1/whois?domain=${domain}`,
-        enabled: true,
-        parseResponse: (data: any) => {
-          if (data && (data.result || data.domain)) {
-            const result = data.result || data;
-            return {
-              domain: domain,
-              registrar: result.registrar || result.registrar_name || 'Unknown',
-              registrationDate: result.created || result.creation_date ? formatDate(result.created || result.creation_date) : null,
-              expirationDate: result.expires || result.expiration_date ? formatDate(result.expires || result.expiration_date) : null,
-              nameServers: result.nameservers || result.name_servers || [],
-              status: result.status ? (Array.isArray(result.status) ? result.status : [result.status]) : [],
-              dnssec: result.dnssec === true || result.dnssec === 'yes' || result.dnssec === 'signed',
-              lastUpdated: result.updated || result.updated_date ? formatDate(result.updated || result.updated_date) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
-              source: 'whois' as const,
-              registrant: result.registrant ? {
-                name: result.registrant.name || result.registrant_name,
-                organization: result.registrant.organization || result.registrant_org,
-                country: result.registrant.country || result.registrant_country
-              } : {}
-            };
-          }
-          return null;
-        }
-      },
-      // WhoisXML API - 支持ccTLD如.cn
-      {
-        name: 'WhoisXML-Free',
-        url: `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=at_demo&domainName=${domain}&outputFormat=JSON`,
-        enabled: true,
-        parseResponse: (data: any) => {
-          if (data && data.WhoisRecord) {
-            const record = data.WhoisRecord;
-            const nameServers: string[] = [];
-            if (record.nameServers && record.nameServers.hostNames) {
-              nameServers.push(...record.nameServers.hostNames);
-            }
-            return {
-              domain: domain,
-              registrar: record.registrarName || record.registrant?.organization || 'Unknown',
-              registrationDate: record.createdDate ? formatDate(record.createdDate) : null,
-              expirationDate: record.expiresDate ? formatDate(record.expiresDate) : null,
-              nameServers: nameServers,
-              status: record.status ? (Array.isArray(record.status) ? record.status : record.status.split(',').map((s: string) => s.trim())) : [],
-              dnssec: false,
-              lastUpdated: record.updatedDate ? formatDate(record.updatedDate) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
-              source: 'whois' as const,
-              registrant: record.registrant ? {
-                name: record.registrant.name,
-                organization: record.registrant.organization,
-                country: record.registrant.country
-              } : {}
-            };
-          }
-          return null;
-        }
-      },
-      // Who.is网页抓取API（免费）
-      {
-        name: 'WhoIs.com-API',
-        url: `https://www.whois.com/whois/${domain}`,
-        enabled: true,
-        parseResponse: (data: any) => {
-          // 这个可能返回HTML，需要特殊处理
-          return null;
-        }
-      },
-      // WhoisFreaks - 需要API KEY
-      {
-        name: 'WhoisFreaks',
-        url: whoisFreaksKey 
-          ? `https://api.whoisfreaks.com/v1.0/whois?apiKey=${whoisFreaksKey}&whois=live&domainName=${domain}`
-          : '',
-        enabled: !!whoisFreaksKey,
-        parseResponse: (data: any) => {
-          if (data && data.whois_raw) {
-            return parseWhoisText(data.whois_raw, domain);
-          }
-          if (data && data.domain_name) {
-            return {
-              domain: domain,
-              registrar: data.domain_registrar?.registrar_name || 'Unknown',
-              registrationDate: data.create_date ? formatDate(data.create_date) : null,
-              expirationDate: data.expiry_date ? formatDate(data.expiry_date) : null,
-              nameServers: data.name_server || [],
-              status: data.domain_status || [],
-              dnssec: false,
-              lastUpdated: data.update_date ? formatDate(data.update_date) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
-              source: 'whois' as const,
-              registrant: data.registrant_contact ? {
-                name: data.registrant_contact.name,
-                organization: data.registrant_contact.company,
-                country: data.registrant_contact.country_name
-              } : {}
-            };
-          }
-          return null;
-        }
-      },
-      // IP2WHOIS - 需要API KEY
-      {
-        name: 'IP2WHOIS',
-        url: ip2whoisKey 
-          ? `https://api.ip2whois.com/v2?key=${ip2whoisKey}&domain=${domain}&format=json`
-          : '',
-        enabled: !!ip2whoisKey,
-        parseResponse: (data: any) => {
-          if (data && data.domain) {
-            return {
-              domain: domain,
-              registrar: data.registrar || 'Unknown',
-              registrationDate: data.create_date ? formatDate(data.create_date) : null,
-              expirationDate: data.expire_date ? formatDate(data.expire_date) : null,
-              nameServers: data.nameservers ? data.nameservers.split(',').map((ns: string) => ns.trim()).filter(Boolean) : [],
-              status: data.domain_status ? [data.domain_status] : [],
-              dnssec: false,
-              lastUpdated: data.update_date ? formatDate(data.update_date) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
-              source: 'whois' as const,
-              registrant: data.registrant_name ? {
-                name: data.registrant_name,
-                organization: data.registrant_organization,
-                country: data.registrant_country
-              } : {}
-            };
-          }
-          return null;
-        }
-      },
-      // WhoisJSON - 需要API KEY
-      {
-        name: 'WhoisJSON',
-        url: whoisJsonKey 
-          ? `https://whoisjson.com/api/v1/whois?domain=${domain}`
-          : '',
-        headers: whoisJsonKey ? { 'Authorization': `Bearer ${whoisJsonKey}` } : undefined,
-        enabled: !!whoisJsonKey,
-        parseResponse: (data: any) => {
-          if (data && data.status === 'success' && data.result) {
-            const result = data.result;
-            return {
-              domain: domain,
-              registrar: result.registrar || 'Unknown',
-              registrationDate: result.created ? formatDate(result.created) : null,
-              expirationDate: result.expires ? formatDate(result.expires) : null,
-              nameServers: result.nameservers || [],
-              status: result.status ? [result.status] : [],
-              dnssec: false,
-              lastUpdated: result.updated ? formatDate(result.updated) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
-              source: 'whois' as const,
-              registrant: {}
-            };
-          }
-          return null;
-        }
-      }
-    ];
-    
-    // 过滤掉禁用的服务
-    const enabledServices = whoisServices.filter(s => s.enabled && s.url);
-    
-    console.log(`Enabled WHOIS services: ${enabledServices.map(s => s.name).join(', ')}`);
-    
-    for (const service of enabledServices) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        
-        console.log(`Trying ${service.name} API for ${domain}`);
-        
-        const headers: Record<string, string> = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json, text/plain, */*',
-          ...(service.headers || {})
-        };
-        
-        const response = await fetch(service.url, {
-          headers,
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          console.log(`${service.name} API failed with status: ${response.status}`);
-          continue;
-        }
-        
-        const contentType = response.headers.get('content-type') || '';
-        
-        // 跳过返回HTML的响应
-        if (contentType.includes('text/html')) {
-          console.log(`${service.name} returned HTML, skipping`);
-          continue;
-        }
-        
-        const data = await response.json();
-        console.log(`${service.name} response received`);
-        
-        const parsedResult = service.parseResponse(data);
-        
-        if (parsedResult && (parsedResult.registrar !== 'Unknown' || parsedResult.registrationDate || parsedResult.nameServers.length > 0)) {
-          console.log(`${service.name} API successful, found valid data`);
-          return parsedResult;
-        }
-        
-      } catch (error) {
-        console.log(`${service.name} API attempt failed:`, error.message);
-        continue;
-      }
-    }
-    
-    // 尝试直接WHOIS服务器查询作为最后的备选方案
-    const whoisServer = WHOIS_SERVERS[tld];
-    if (whoisServer) {
-      console.log(`Trying direct WHOIS lookup via whois-servers.net proxy for ${domain}`);
-      try {
-        // 尝试使用公共WHOIS代理
-        const proxyUrl = `https://whois-servers.net/whois.php?domain=${domain}&server=${whoisServer}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const response = await fetch(proxyUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'text/plain, */*'
-          },
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-          const text = await response.text();
-          if (text && text.length > 100 && !text.includes('<html')) {
-            const parsed = parseWhoisText(text, domain);
-            if (parsed && (parsed.registrar !== 'Unknown' || parsed.registrationDate)) {
-              console.log('Direct WHOIS proxy successful');
-              return parsed;
-            }
-          }
-        }
-      } catch (error) {
-        console.log('Direct WHOIS proxy failed:', error.message);
-      }
-    }
-    
-    // 如果所有API都失败，抛出错误
-    throw new Error('所有WHOIS查询服务均无法返回有效数据。如需查询国别域名（如.cn），请配置WHOISFREAKS_API_KEY或IP2WHOIS_API_KEY环境变量。');
-    
-  } catch (error) {
-    console.error(`WHOIS query failed for ${domain}:`, error);
-    throw error;
-  }
-}
-
-// 解析纯文本WHOIS响应
-function parseWhoisText(text: string, domain: string): any {
-  const lines = text.split('\n');
-  const result: any = { 
-    domain,
-    registrar: 'Unknown',
-    registrationDate: null,
-    expirationDate: null,
-    nameServers: [],
-    status: [],
-    dnssec: false,
-    lastUpdated: `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
-    source: 'whois' as const,
-    registrant: {}
-  };
-  
-  // 检查域名状态关键词
-  const textLower = text.toLowerCase();
-  
-  // 域名未注册的严格标识 - 更精确的匹配
-  const notFoundIndicators = [
-    'no match for domain', 'not found in database', 'no data found for',
-    'domain is not registered', 'available for registration', 'status: free',
-    'status: available', 'no matching record found', 'no such domain exists',
-    'object does not exist', 'domain not found in registry', 'not exist in registry',
-    'domain name not found', 'domain is available', 'no domain found'
-  ];
-  
-  // 域名保留/受限的严格标识 - 避免误判
-  const reservedIndicators = [
-    'reserved domain', 'restricted domain', 'domain is reserved',
-    'domain is restricted', 'registry reserved', 'registrar reserved',
-    'quarantined domain', 'domain quarantined', 'premium domain name',
-    'registry lock applied', 'registrar lock applied'
-  ];
-  
-  // 首先检查是否有实际的域名信息 - 避免误判
-  let hasRegistrarInfo = false;
-  let hasValidDates = false;
-  let hasNameServers = false;
-  
-  // 检查关键信息是否存在
-  for (const line of lines) {
-    const trimmed = line.trim();
-    const lowerLine = trimmed.toLowerCase();
-    
-    if (lowerLine.includes('registrar:') && !lowerLine.includes('not available')) {
-      hasRegistrarInfo = true;
-    }
-    if (lowerLine.includes('creation date:') || lowerLine.includes('created:') || 
-        lowerLine.includes('registration time:') || lowerLine.includes('expires:')) {
-      hasValidDates = true;
-    }
-    if (lowerLine.includes('name server:') || lowerLine.includes('nserver:')) {
-      hasNameServers = true;
-    }
-  }
-  
-  // 如果有关键域名信息，说明域名已注册 - 不进行未注册判断
-  if (hasRegistrarInfo || hasValidDates || hasNameServers) {
-    // 域名已注册，继续解析
-  } else {
-    // 只有在明确没有注册信息时才检查未注册标识
-    if (notFoundIndicators.some(indicator => textLower.includes(indicator))) {
-      throw new Error('domain_not_found');
-    }
-    
-    // 检查是否为保留/受限域名 - 更严格的匹配
-    if (reservedIndicators.some(indicator => textLower.includes(indicator))) {
-      throw new Error('domain_reserved');
-    }
-  }
-  
-  for (const line of lines) {
-    const trimmed = line.trim();
-    const lowerLine = trimmed.toLowerCase();
-    
-    // 注册商信息 - 扩展更多匹配模式
-    if (lowerLine.includes('registrar:') || lowerLine.includes('registrar name:') || 
-        lowerLine.includes('registrar organization:') || lowerLine.includes('sponsoring registrar:') ||
-        lowerLine.includes('registrar id:') || lowerLine.includes('registrar company:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        const registrarValue = parts.slice(1).join(':').trim();
-        if (registrarValue && registrarValue !== 'Unknown' && registrarValue !== '-') {
-          result.registrar = registrarValue;
-        }
-      }
-    }
-    // 创建日期 - 扩展更多匹配模式
-    else if (lowerLine.includes('creation date:') || lowerLine.includes('created:') || 
-             lowerLine.includes('created on:') || lowerLine.includes('registration time:') ||
-             lowerLine.includes('registered on:') || lowerLine.includes('registered:') ||
-             lowerLine.includes('domain registered:') || lowerLine.includes('registration date:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        result.registrationDate = formatDate(parts.slice(1).join(':').trim());
-      }
-    }
-    // 到期日期 - 扩展更多匹配模式
-    else if (lowerLine.includes('expiry date:') || lowerLine.includes('expires:') || 
-             lowerLine.includes('expiration date:') || lowerLine.includes('expires on:') || 
-             lowerLine.includes('expiration time:') || lowerLine.includes('registry expiry date:') ||
-             lowerLine.includes('domain expires:') || lowerLine.includes('expire date:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        result.expirationDate = formatDate(parts.slice(1).join(':').trim());
-      }
-    }
-    // DNS服务器 - 扩展更多匹配模式
-    else if (lowerLine.includes('name server:') || lowerLine.includes('nserver:') || 
-             lowerLine.includes('nameserver:') || lowerLine.includes('dns:') ||
-             lowerLine.includes('ns1:') || lowerLine.includes('ns2:') || 
-             lowerLine.includes('dns1:') || lowerLine.includes('dns2:') ||
-             lowerLine.includes('primary dns:') || lowerLine.includes('secondary dns:') ||
-             lowerLine.includes('domain servers:') || lowerLine.includes('name servers:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        const ns = parts.slice(1).join(':').trim().toLowerCase();
-        // 清理DNS服务器名称，移除多余的空格和符号
-        const cleanNs = ns.replace(/\s+/g, ' ').trim();
-        if (cleanNs && cleanNs !== '-' && cleanNs !== 'not available' && 
-            !result.nameServers.includes(cleanNs)) {
-          result.nameServers.push(cleanNs);
-        }
-      }
-    }
-    // 域名状态
-    else if (lowerLine.includes('domain status:') || lowerLine.includes('status:') || lowerLine.includes('domain state:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        const statusText = parts.slice(1).join(':').trim();
-        // 提取多个状态
-        const statuses = statusText.split(/[,;\s]+/).filter(s => s.length > 0);
-        statuses.forEach(status => {
-          const cleanStatus = status.split(' ')[0];
-          if (cleanStatus && !result.status.includes(cleanStatus)) {
-            result.status.push(cleanStatus);
-          }
-        });
-      }
-    }
-    // DNSSEC
-    else if (lowerLine.includes('dnssec:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        const dnssecValue = parts.slice(1).join(':').trim().toLowerCase();
-        result.dnssec = dnssecValue.includes('signed') || dnssecValue === 'yes' || dnssecValue === 'enabled';
-      }
-    }
-    // 更新日期 - 扩展更多匹配模式
-    else if (lowerLine.includes('updated date:') || lowerLine.includes('last updated:') || 
-             lowerLine.includes('changed:') || lowerLine.includes('modified:') ||
-             lowerLine.includes('last modified:') || lowerLine.includes('last changed:') ||
-             lowerLine.includes('registry updated:') || lowerLine.includes('last update:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        const updatedDate = formatDate(parts.slice(1).join(':').trim());
-        if (updatedDate) {
-          result.lastUpdated = updatedDate;
-        }
-      }
-    }
-    // 注册人信息
-    else if (lowerLine.includes('registrant name:') || lowerLine.includes('registrant:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        result.registrant.name = parts.slice(1).join(':').trim();
-      }
-    }
-    else if (lowerLine.includes('registrant organization:') || lowerLine.includes('registrant org:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        result.registrant.organization = parts.slice(1).join(':').trim();
-      }
-    }
-    else if (lowerLine.includes('registrant email:') || lowerLine.includes('registrant e-mail:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        result.registrant.email = parts.slice(1).join(':').trim();
-      }
-    }
-    else if (lowerLine.includes('registrant country:')) {
-      const parts = line.split(':');
-      if (parts.length > 1) {
-        result.registrant.country = parts.slice(1).join(':').trim();
-      }
-    }
-  }
-  
-  return result;
-}
-
 // 解析RDAP响应
 function parseRDAPResponse(data: any): any {
   const domain = data.ldhName || data.unicodeName || '';
@@ -646,17 +454,14 @@ function parseRDAPResponse(data: any): any {
   const nameservers = data.nameservers || [];
   const status = data.status || [];
 
-  // 提取日期
   const registrationDate = events.find((e: any) => e.eventAction === 'registration')?.eventDate;
   const expirationDate = events.find((e: any) => e.eventAction === 'expiration')?.eventDate;
   const lastUpdated = events.find((e: any) => e.eventAction === 'last changed')?.eventDate;
 
-  // 提取注册商信息
   const registrarEntity = entities.find((e: any) => e.roles?.includes('registrar'));
   const registrar = registrarEntity?.vcardArray?.[1]?.find((v: any) => v[0] === 'fn')?.[3] || 
                    registrarEntity?.publicIds?.[0]?.identifier || 'Unknown';
 
-  // 提取注册人信息
   const registrantEntity = entities.find((e: any) => e.roles?.includes('registrant'));
   const registrant = registrantEntity ? {
     name: registrantEntity.vcardArray?.[1]?.find((v: any) => v[0] === 'fn')?.[3],
@@ -673,157 +478,293 @@ function parseRDAPResponse(data: any): any {
     status: status,
     registrant,
     dnssec: data.secureDNS?.delegationSigned || false,
-    lastUpdated: lastUpdated ? formatDate(lastUpdated) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
+    lastUpdated: lastUpdated ? formatDate(lastUpdated) : formatDate(new Date().toISOString()),
     source: 'rdap' as const
   };
 }
 
-// 解析WHOIS响应
-function parseWHOISResponse(data: any, domain: string): any {
-  console.log(`Parsing WHOIS response for ${domain}:`, JSON.stringify(data, null, 2));
-  
-  // 处理不同格式的WHOIS响应
-  const whoisRecord = data.WhoisRecord || data.result || data;
-  const registryData = whoisRecord.registryData || whoisRecord.registry || whoisRecord;
-  const registrarData = whoisRecord.registrarData || whoisRecord.registrar || {};
-
-  // 提取日期信息 - 扩展更多字段
-  const createdDate = registryData.createdDate || registryData.created || registryData.creationDate || 
-                     registryData.registrationDate || registrarData.createdDate || registrarData.created || 
-                     data.createdDate || data.created || data.registrationDate;
-                     
-  const expirationDate = registryData.expiresDate || registryData.expires || registryData.expirationDate ||
-                        registryData.expiryDate || registrarData.expiresDate || registrarData.expires || 
-                        data.expirationDate || data.expires || data.expiryDate;
-  
-  const updatedDate = registryData.updatedDate || registryData.updated || registryData.lastUpdated ||
-                     registrarData.updatedDate || registrarData.updated || data.updatedDate || data.updated;
-  
-  // 提取名称服务器 - 扩展更多格式
-  let nameServers = [];
-  if (registryData.nameServers?.hostNames) {
-    nameServers = registryData.nameServers.hostNames;
-  } else if (registryData.nameServers && Array.isArray(registryData.nameServers)) {
-    nameServers = registryData.nameServers;
-  } else if (registryData.dns && Array.isArray(registryData.dns)) {
-    nameServers = registryData.dns;
-  } else if (data.nameServers && Array.isArray(data.nameServers)) {
-    nameServers = data.nameServers;
-  } else if (data.dns && Array.isArray(data.dns)) {
-    nameServers = data.dns;
-  }
-
-  // 提取状态信息 - 扩展更多格式
-  let status = [];
-  if (registryData.status && Array.isArray(registryData.status)) {
-    status = registryData.status.map((s: string) => s.split(' ')[0]);
-  } else if (data.status && Array.isArray(data.status)) {
-    status = data.status.map((s: string) => s.split(' ')[0]);
-  }
-
-  return {
-    domain: domain,
-    registrar: registrarData.registrarName || registryData.registrarName || 
-               registrarData.name || registryData.registrar || data.registrar || 'Unknown',
-    registrationDate: createdDate ? formatDate(createdDate) : null,
-    expirationDate: expirationDate ? formatDate(expirationDate) : null,
-    nameServers: nameServers.filter(Boolean),
-    status: status.filter(Boolean),
-    registrant: (registryData.registrant || data.registrant) ? {
-      name: registryData.registrant?.name || data.registrant?.name,
-      organization: registryData.registrant?.organization || data.registrant?.organization,
-      country: registryData.registrant?.country || data.registrant?.country
-    } : undefined,
-    dnssec: registryData.dnssec === 'signed' || registryData.dnssec === true || false,
-    lastUpdated: updatedDate ? formatDate(updatedDate) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
-    source: 'whois' as const
+// 解析WHOIS文本响应
+function parseWhoisText(text: string, domain: string): any {
+  const lines = text.split('\n');
+  const result: any = { 
+    domain,
+    registrar: 'Unknown',
+    registrationDate: null,
+    expirationDate: null,
+    nameServers: [],
+    status: [],
+    dnssec: false,
+    lastUpdated: formatDate(new Date().toISOString()),
+    source: 'whois' as const,
+    registrant: {}
   };
+  
+  const textLower = text.toLowerCase();
+  
+  // 检查域名未注册
+  const notFoundIndicators = [
+    'no match for domain', 'not found', 'no data found',
+    'domain is not registered', 'available for registration', 'status: free',
+    'status: available', 'no entries found', 'nothing found',
+    'object does not exist', 'domain not found', 'no object found',
+    'the queried object does not exist', 'not been registered'
+  ];
+  
+  // 首先检查是否有注册信息
+  let hasRegistrarInfo = false;
+  let hasValidDates = false;
+  let hasNameServers = false;
+  
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase().trim();
+    if ((lowerLine.includes('registrar:') || lowerLine.includes('sponsoring registrar:')) && !lowerLine.includes('not available')) {
+      hasRegistrarInfo = true;
+    }
+    if (lowerLine.includes('creation date:') || lowerLine.includes('created:') || 
+        lowerLine.includes('registration time:') || lowerLine.includes('registered on:')) {
+      hasValidDates = true;
+    }
+    if (lowerLine.includes('name server:') || lowerLine.includes('nserver:') || lowerLine.includes('dns:')) {
+      hasNameServers = true;
+    }
+  }
+  
+  // 只有在没有注册信息时才判断为未注册
+  if (!hasRegistrarInfo && !hasValidDates && !hasNameServers) {
+    if (notFoundIndicators.some(indicator => textLower.includes(indicator))) {
+      throw new Error('domain_not_found');
+    }
+  }
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const lowerLine = trimmed.toLowerCase();
+    
+    // 注册商信息
+    if (lowerLine.includes('registrar:') || lowerLine.includes('sponsoring registrar:') || 
+        lowerLine.includes('registrar name:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const registrarValue = parts.slice(1).join(':').trim();
+        if (registrarValue && registrarValue !== 'Unknown' && registrarValue !== '-') {
+          result.registrar = registrarValue;
+        }
+      }
+    }
+    // 创建日期
+    else if (lowerLine.includes('creation date:') || lowerLine.includes('created:') || 
+             lowerLine.includes('created on:') || lowerLine.includes('registration time:') ||
+             lowerLine.includes('registered on:') || lowerLine.includes('registration date:') ||
+             lowerLine.includes('domain registered:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const dateValue = parts.slice(1).join(':').trim();
+        if (dateValue && dateValue !== '-') {
+          result.registrationDate = formatDate(dateValue);
+        }
+      }
+    }
+    // 到期日期
+    else if (lowerLine.includes('expiry date:') || lowerLine.includes('expires:') || 
+             lowerLine.includes('expiration date:') || lowerLine.includes('expires on:') || 
+             lowerLine.includes('expiration time:') || lowerLine.includes('registry expiry date:') ||
+             lowerLine.includes('paid-till:') || lowerLine.includes('expire date:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const dateValue = parts.slice(1).join(':').trim();
+        if (dateValue && dateValue !== '-') {
+          result.expirationDate = formatDate(dateValue);
+        }
+      }
+    }
+    // DNS服务器
+    else if (lowerLine.includes('name server:') || lowerLine.includes('nserver:') || 
+             lowerLine.includes('nameserver:') || lowerLine.startsWith('dns:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const ns = parts.slice(1).join(':').trim().toLowerCase();
+        const cleanNs = ns.split(' ')[0].trim();
+        if (cleanNs && cleanNs !== '-' && cleanNs !== 'not available' && 
+            !result.nameServers.includes(cleanNs) && cleanNs.includes('.')) {
+          result.nameServers.push(cleanNs);
+        }
+      }
+    }
+    // 域名状态
+    else if (lowerLine.includes('domain status:') || lowerLine.startsWith('status:') || lowerLine.includes('domain state:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const statusText = parts.slice(1).join(':').trim();
+        const statuses = statusText.split(/[,;\s]+/).filter(s => s.length > 0);
+        statuses.forEach(status => {
+          const cleanStatus = status.split(' ')[0].replace(/https?:\/\/.*/, '').trim();
+          if (cleanStatus && !result.status.includes(cleanStatus) && cleanStatus.length > 1) {
+            result.status.push(cleanStatus);
+          }
+        });
+      }
+    }
+    // DNSSEC
+    else if (lowerLine.includes('dnssec:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const dnssecValue = parts.slice(1).join(':').trim().toLowerCase();
+        result.dnssec = dnssecValue.includes('signed') || dnssecValue === 'yes' || dnssecValue === 'enabled';
+      }
+    }
+    // 更新日期
+    else if (lowerLine.includes('updated date:') || lowerLine.includes('last updated:') || 
+             lowerLine.includes('changed:') || lowerLine.includes('modified:') ||
+             lowerLine.includes('last modified:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const updatedDate = formatDate(parts.slice(1).join(':').trim());
+        if (updatedDate) {
+          result.lastUpdated = updatedDate;
+        }
+      }
+    }
+    // 注册人信息
+    else if (lowerLine.includes('registrant name:') || lowerLine.startsWith('registrant:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const value = parts.slice(1).join(':').trim();
+        if (value && value !== '-') {
+          result.registrant.name = value;
+        }
+      }
+    }
+    else if (lowerLine.includes('registrant organization:') || lowerLine.includes('registrant org:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const value = parts.slice(1).join(':').trim();
+        if (value && value !== '-') {
+          result.registrant.organization = value;
+        }
+      }
+    }
+    else if (lowerLine.includes('registrant country:')) {
+      const parts = line.split(':');
+      if (parts.length > 1) {
+        const value = parts.slice(1).join(':').trim();
+        if (value && value !== '-') {
+          result.registrant.country = value;
+        }
+      }
+    }
+  }
+  
+  return result;
 }
 
 // 格式化日期为中文年月日格式
 function formatDate(dateStr: string): string {
   try {
-    // 清理日期字符串，移除多余的信息
-    const cleanDateStr = dateStr.replace(/\s*\(.*?\)/, '').replace(/\s*UTC.*/, '').trim();
+    const cleanDateStr = dateStr.replace(/\s*\(.*?\)/, '').replace(/\s*UTC.*/, '').replace(/T.*/, ' ').trim();
     
     const date = new Date(cleanDateStr);
-    if (isNaN(date.getTime())) {
-      // 尝试解析其他格式
-      const dateFormats = [
-        /(\d{4})-(\d{1,2})-(\d{1,2})/,  // YYYY-MM-DD
-        /(\d{1,2})\/(\d{1,2})\/(\d{4})/,  // MM/DD/YYYY
-        /(\d{1,2})-(\d{1,2})-(\d{4})/,   // MM-DD-YYYY
-        /(\d{4})\/(\d{1,2})\/(\d{1,2})/  // YYYY/MM/DD
-      ];
-      
-      for (const format of dateFormats) {
-        const match = cleanDateStr.match(format);
-        if (match) {
-          let year, month, day;
-          if (format.source.startsWith('(\\d{4})')) {
-            // YYYY format
-            [, year, month, day] = match;
-          } else {
-            // MM/DD format
-            [, month, day, year] = match;
-          }
-          return `${year}年${month.padStart(2, '0')}月${day.padStart(2, '0')}日`;
-        }
-      }
-      return cleanDateStr; // 如果无法解析，返回清理后的字符串
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}年${month}月${day}日`;
     }
     
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}年${month}月${day}日`;
+    // 尝试解析其他格式
+    const dateFormats = [
+      /(\d{4})-(\d{1,2})-(\d{1,2})/,
+      /(\d{4})\.(\d{1,2})\.(\d{1,2})/,
+      /(\d{4})\/(\d{1,2})\/(\d{1,2})/,
+      /(\d{1,2})\/(\d{1,2})\/(\d{4})/,
+      /(\d{1,2})-(\d{1,2})-(\d{4})/,
+    ];
+    
+    for (const format of dateFormats) {
+      const match = cleanDateStr.match(format);
+      if (match) {
+        let year, month, day;
+        if (format.source.startsWith('(\\d{4})')) {
+          [, year, month, day] = match;
+        } else {
+          [, month, day, year] = match;
+        }
+        return `${year}年${String(month).padStart(2, '0')}月${String(day).padStart(2, '0')}日`;
+      }
+    }
+    
+    return cleanDateStr;
   } catch {
     return dateStr;
   }
 }
 
-// 智能双系统查询
+// 执行域名查询 - RDAP优先，WHOIS兜底
 async function performDualLookup(domain: string): Promise<any> {
   const results: any = {};
   const errors: string[] = [];
   const tld = getTLD(domain);
 
-  console.log(`Starting dual lookup for ${domain} (TLD: ${tld})`);
+  console.log(`Starting lookup for ${domain} (TLD: ${tld})`);
 
-  // 并行执行RDAP和WHOIS查询以提高效率
-  let rdapError = null;
-  let whoisError = null;
-  
-  const rdapPromise = RDAP_SERVERS[tld] ? queryRDAP(domain).catch(error => {
-    console.log(`RDAP failed for ${domain}:`, error.message);
-    rdapError = error;
-    errors.push(`RDAP: ${error.message}`);
-    return null;
-  }) : Promise.resolve(null);
-
-  const whoisPromise = queryWHOIS(domain).catch(error => {
-    console.log(`WHOIS failed for ${domain}:`, error.message);
-    whoisError = error;
-    errors.push(`WHOIS: ${error.message}`);
-    return null;
-  });
-
-  // 等待两个查询完成
-  const [rdapResult, whoisResult] = await Promise.all([rdapPromise, whoisPromise]);
-
-  if (rdapResult) {
-    results.primary = rdapResult;
-    console.log(`RDAP lookup successful for ${domain}`);
+  // 1. 首先尝试RDAP查询（如果支持）
+  if (RDAP_SERVERS[tld]) {
+    try {
+      console.log(`Attempting RDAP query for ${domain}`);
+      const rdapResult = await queryRDAP(domain);
+      if (rdapResult) {
+        results.primary = rdapResult;
+        console.log(`RDAP lookup successful for ${domain}`);
+      }
+    } catch (error) {
+      console.log(`RDAP failed for ${domain}: ${error.message}`);
+      errors.push(`RDAP: ${error.message}`);
+      
+      // 如果RDAP返回域名未找到，直接返回
+      if (error.message === 'domain_not_found') {
+        return {
+          error: `域名 ${domain} 未注册，该域名可供注册使用`,
+          errorType: 'domain_not_found'
+        };
+      }
+    }
+  } else {
+    console.log(`RDAP not available for .${tld}, skipping`);
   }
 
-  if (whoisResult) {
-    results.secondary = whoisResult;
-    console.log(`WHOIS lookup successful for ${domain}`);
+  // 2. 如果RDAP失败或不支持，使用WHOIS直连查询
+  if (!results.primary) {
+    if (WHOIS_SERVERS[tld]) {
+      try {
+        console.log(`Attempting direct WHOIS query for ${domain}`);
+        const whoisText = await queryWhoisDirect(domain);
+        
+        if (whoisText && whoisText.length > 50) {
+          const whoisResult = parseWhoisText(whoisText, domain);
+          if (whoisResult && (whoisResult.registrar !== 'Unknown' || 
+              whoisResult.registrationDate || whoisResult.nameServers.length > 0)) {
+            results.primary = whoisResult;
+            console.log(`WHOIS lookup successful for ${domain}`);
+          }
+        }
+      } catch (error) {
+        console.log(`Direct WHOIS failed for ${domain}: ${error.message}`);
+        errors.push(`WHOIS: ${error.message}`);
+        
+        if (error.message === 'domain_not_found') {
+          return {
+            error: `域名 ${domain} 未注册，该域名可供注册使用`,
+            errorType: 'domain_not_found'
+          };
+        }
+      }
+    } else {
+      console.log(`No WHOIS server found for .${tld}`);
+      errors.push(`WHOIS: No server for .${tld}`);
+    }
   }
 
-  // 如果两个都失败了，进行详细的错误分析
-  if (!results.primary && !results.secondary) {
-    // 检查是否是不支持的TLD
+  // 3. 如果都失败了，返回错误
+  if (!results.primary) {
     if (!RDAP_SERVERS[tld] && !WHOIS_SERVERS[tld]) {
       return {
         error: `不支持查询 .${tld} 域名后缀。该顶级域名暂未纳入查询服务范围。`,
@@ -831,77 +772,36 @@ async function performDualLookup(domain: string): Promise<any> {
       };
     }
     
-    // 检查是否是域名未注册 - 更严格的判断
-    if ((rdapError && rdapError.message === 'domain_not_found') ||
-        (whoisError && whoisError.message === 'domain_not_found')) {
+    if (errors.some(e => e.includes('timeout') || e.includes('connection'))) {
       return {
-        error: `域名 ${domain} 未注册，该域名可供注册使用`,
-        errorType: 'domain_not_found'
-      };
-    }
-
-    // 检查是否是域名被保留 - 更严格的判断
-    if ((rdapError && rdapError.message === 'domain_reserved') ||
-        (whoisError && whoisError.message === 'domain_reserved')) {
-      return {
-        error: `域名 ${domain} 为保留域名，不可注册`,
-        errorType: 'domain_reserved'
-      };
-    }
-    
-    // 检查是否是域名受限
-    if ((rdapError && rdapError.message === 'domain_restricted') ||
-        (whoisError && whoisError.message === 'domain_restricted') ||
-        errors.some(e => e.includes('access denied') || e.includes('unauthorized'))) {
-      return {
-        error: `域名 ${domain} 为受限域名，需特殊申请`,
-        errorType: 'domain_restricted'
-      };
-    }
-    
-    // 网络或服务器错误
-    if (errors.some(e => e.includes('timeout') || e.includes('network') || e.includes('connection'))) {
-      return {
-        error: `网络连接超时，请稍后重试。可能是查询服务器暂时不可用。`,
+        error: `网络连接超时，请稍后重试。`,
         errorType: 'network_error'
       };
     }
     
-    // 其他错误
     return {
-      error: `查询失败：${errors.slice(0, 2).join('; ')}。请稍后重试或联系技术支持。`,
+      error: `查询失败：${errors.slice(0, 2).join('; ')}。请稍后重试。`,
       errorType: 'query_failed',
       details: errors
     };
   }
 
-  // 如果只有一个成功，记录原因
-  if (results.primary && !results.secondary) {
-    console.log(`Only RDAP succeeded for ${domain}. WHOIS errors: ${errors.filter(e => e.startsWith('WHOIS')).join(', ')}`);
-  } else if (!results.primary && results.secondary) {
-    console.log(`Only WHOIS succeeded for ${domain}. RDAP errors: ${errors.filter(e => e.startsWith('RDAP')).join(', ')}`);
-  }
-
-  // 增加完整的原始数据信息供调试使用
+  // 添加元数据
   results.metadata = {
     tld: tld,
     queryTimestamp: new Date().toISOString(),
     rdapSupported: !!RDAP_SERVERS[tld],
     whoisSupported: !!WHOIS_SERVERS[tld],
     rdapServer: RDAP_SERVERS[tld],
-    whoisServer: WHOIS_SERVERS[tld],
+    whoisServer: WHOIS_SERVERS[tld]?.server,
     errors: errors,
-    queryMethods: [
-      results.primary ? `RDAP (${RDAP_SERVERS[tld]})` : null,
-      results.secondary ? `HTTP WHOIS APIs` : null
-    ].filter(Boolean)
+    queryMethods: [results.primary?.source === 'rdap' ? `RDAP` : `WHOIS Direct (${WHOIS_SERVERS[tld]?.server})`]
   };
 
   return results;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -912,14 +812,10 @@ serve(async (req) => {
     if (!domain) {
       return new Response(
         JSON.stringify({ error: '域名参数不能为空' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // 基本域名格式验证
     const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
     if (!domainRegex.test(domain.trim())) {
       return new Response(
@@ -927,10 +823,7 @@ serve(async (req) => {
           error: '域名格式无效，请输入有效的域名格式，如：example.com',
           errorType: 'invalid_format'
         }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -939,9 +832,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(result),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Edge function error:', error);
@@ -950,10 +841,7 @@ serve(async (req) => {
         error: '服务器内部错误，请稍后重试',
         errorType: 'server_error'
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
