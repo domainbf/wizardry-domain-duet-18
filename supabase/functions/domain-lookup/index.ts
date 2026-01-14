@@ -63,7 +63,8 @@ const WHOIS_SERVERS: Record<string, string> = {
   'bn': 'whois.bnnic.bn'
 };
 
-// RDAP服务器列表
+// RDAP服务器列表 - 注意：部分国别域名RDAP服务器可能无法访问
+// 对于.cn等国别域名，建议配置WHOIS API密钥作为备选方案
 const RDAP_SERVERS: Record<string, string> = {
   'com': 'https://rdap.verisign.com/com/v1',
   'net': 'https://rdap.verisign.com/net/v1',
@@ -84,13 +85,17 @@ const RDAP_SERVERS: Record<string, string> = {
   'au': 'https://rdap.nic.au',
   'ca': 'https://rdap.ca',
   'jp': 'https://rdap.jprs.jp',
-  'cn': 'https://rdap.cnnic.cn',
+  // 移除.cn的RDAP - 该服务器从Edge Function环境无法访问
+  // 'cn': 'https://rdap.cnnic.cn',
   'cc': 'https://rdap.nic.cc',
   'tv': 'https://rdap.nic.tv',
   'me': 'https://rdap.nic.me',
   'co': 'https://rdap.nic.co',
   'io': 'https://rdap.nic.io'
 };
+
+// 不支持RDAP的TLD列表（需要依赖WHOIS API）
+const RDAP_UNSUPPORTED_TLDS = ['cn', 'tw', 'hk', 'ru', 'kr', 'br', 'mx', 'in', 'sg', 'my', 'id', 'ph', 'vn', 'th'];
 
 // 解析域名获取TLD
 function getTLD(domain: string): string {
@@ -115,6 +120,12 @@ function getTLD(domain: string): string {
 // RDAP查询
 async function queryRDAP(domain: string): Promise<any> {
   const tld = getTLD(domain);
+  
+  // 检查TLD是否在不支持RDAP的列表中
+  if (RDAP_UNSUPPORTED_TLDS.includes(tld)) {
+    throw new Error(`RDAP not available for .${tld} domains (国别域名需要使用WHOIS API查询)`);
+  }
+  
   const rdapServer = RDAP_SERVERS[tld];
   
   if (!rdapServer) {
@@ -162,22 +173,129 @@ async function queryWHOIS(domain: string): Promise<any> {
   
   console.log(`Querying WHOIS for ${domain} via HTTP APIs`);
   
+  // 获取可选的API密钥
+  const whoisFreaksKey = Deno.env.get('WHOISFREAKS_API_KEY') || '';
+  const ip2whoisKey = Deno.env.get('IP2WHOIS_API_KEY') || '';
+  const whoisJsonKey = Deno.env.get('WHOISJSON_API_KEY') || '';
+  
   try {
-    // 使用更可靠的WHOIS API服务
-    const whoisServices = [
+    // 使用多个WHOIS API服务（优先使用不需要API KEY的免费服务）
+    const whoisServices: Array<{
+      name: string;
+      url: string;
+      headers?: Record<string, string>;
+      enabled: boolean;
+      parseResponse: (data: any) => any;
+    }> = [
+      // JSONWHOIS.io - 免费无需API KEY
       {
-        name: 'WhoisFreaks',
-        url: `https://api.whoisfreaks.com/v1.0/whois?apiKey=FREE&whois=live&domainName=${domain}`,
+        name: 'JSONWhois.io',
+        url: `https://jsonwhois.io/api/v1/whois?domain=${domain}`,
+        enabled: true,
         parseResponse: (data: any) => {
-          if (data && data.whois_raw) {
-            return parseWhoisText(data.whois_raw, domain);
+          if (data && (data.result || data.domain)) {
+            const result = data.result || data;
+            return {
+              domain: domain,
+              registrar: result.registrar || result.registrar_name || 'Unknown',
+              registrationDate: result.created || result.creation_date ? formatDate(result.created || result.creation_date) : null,
+              expirationDate: result.expires || result.expiration_date ? formatDate(result.expires || result.expiration_date) : null,
+              nameServers: result.nameservers || result.name_servers || [],
+              status: result.status ? (Array.isArray(result.status) ? result.status : [result.status]) : [],
+              dnssec: result.dnssec === true || result.dnssec === 'yes' || result.dnssec === 'signed',
+              lastUpdated: result.updated || result.updated_date ? formatDate(result.updated || result.updated_date) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
+              source: 'whois' as const,
+              registrant: result.registrant ? {
+                name: result.registrant.name || result.registrant_name,
+                organization: result.registrant.organization || result.registrant_org,
+                country: result.registrant.country || result.registrant_country
+              } : {}
+            };
           }
           return null;
         }
       },
+      // WhoisXML API - 支持ccTLD如.cn
+      {
+        name: 'WhoisXML-Free',
+        url: `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=at_demo&domainName=${domain}&outputFormat=JSON`,
+        enabled: true,
+        parseResponse: (data: any) => {
+          if (data && data.WhoisRecord) {
+            const record = data.WhoisRecord;
+            const nameServers: string[] = [];
+            if (record.nameServers && record.nameServers.hostNames) {
+              nameServers.push(...record.nameServers.hostNames);
+            }
+            return {
+              domain: domain,
+              registrar: record.registrarName || record.registrant?.organization || 'Unknown',
+              registrationDate: record.createdDate ? formatDate(record.createdDate) : null,
+              expirationDate: record.expiresDate ? formatDate(record.expiresDate) : null,
+              nameServers: nameServers,
+              status: record.status ? (Array.isArray(record.status) ? record.status : record.status.split(',').map((s: string) => s.trim())) : [],
+              dnssec: false,
+              lastUpdated: record.updatedDate ? formatDate(record.updatedDate) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
+              source: 'whois' as const,
+              registrant: record.registrant ? {
+                name: record.registrant.name,
+                organization: record.registrant.organization,
+                country: record.registrant.country
+              } : {}
+            };
+          }
+          return null;
+        }
+      },
+      // Who.is网页抓取API（免费）
+      {
+        name: 'WhoIs.com-API',
+        url: `https://www.whois.com/whois/${domain}`,
+        enabled: true,
+        parseResponse: (data: any) => {
+          // 这个可能返回HTML，需要特殊处理
+          return null;
+        }
+      },
+      // WhoisFreaks - 需要API KEY
+      {
+        name: 'WhoisFreaks',
+        url: whoisFreaksKey 
+          ? `https://api.whoisfreaks.com/v1.0/whois?apiKey=${whoisFreaksKey}&whois=live&domainName=${domain}`
+          : '',
+        enabled: !!whoisFreaksKey,
+        parseResponse: (data: any) => {
+          if (data && data.whois_raw) {
+            return parseWhoisText(data.whois_raw, domain);
+          }
+          if (data && data.domain_name) {
+            return {
+              domain: domain,
+              registrar: data.domain_registrar?.registrar_name || 'Unknown',
+              registrationDate: data.create_date ? formatDate(data.create_date) : null,
+              expirationDate: data.expiry_date ? formatDate(data.expiry_date) : null,
+              nameServers: data.name_server || [],
+              status: data.domain_status || [],
+              dnssec: false,
+              lastUpdated: data.update_date ? formatDate(data.update_date) : `${new Date().getFullYear()}年${String(new Date().getMonth() + 1).padStart(2, '0')}月${String(new Date().getDate()).padStart(2, '0')}日`,
+              source: 'whois' as const,
+              registrant: data.registrant_contact ? {
+                name: data.registrant_contact.name,
+                organization: data.registrant_contact.company,
+                country: data.registrant_contact.country_name
+              } : {}
+            };
+          }
+          return null;
+        }
+      },
+      // IP2WHOIS - 需要API KEY
       {
         name: 'IP2WHOIS',
-        url: `https://api.ip2whois.com/v2?key=demo&domain=${domain}&format=json`,
+        url: ip2whoisKey 
+          ? `https://api.ip2whois.com/v2?key=${ip2whoisKey}&domain=${domain}&format=json`
+          : '',
+        enabled: !!ip2whoisKey,
         parseResponse: (data: any) => {
           if (data && data.domain) {
             return {
@@ -200,9 +318,14 @@ async function queryWHOIS(domain: string): Promise<any> {
           return null;
         }
       },
+      // WhoisJSON - 需要API KEY
       {
         name: 'WhoisJSON',
-        url: `https://whoisjson.com/api/v1/whois?domain=${domain}`,
+        url: whoisJsonKey 
+          ? `https://whoisjson.com/api/v1/whois?domain=${domain}`
+          : '',
+        headers: whoisJsonKey ? { 'Authorization': `Bearer ${whoisJsonKey}` } : undefined,
+        enabled: !!whoisJsonKey,
         parseResponse: (data: any) => {
           if (data && data.status === 'success' && data.result) {
             const result = data.result;
@@ -224,18 +347,26 @@ async function queryWHOIS(domain: string): Promise<any> {
       }
     ];
     
-    for (const service of whoisServices) {
+    // 过滤掉禁用的服务
+    const enabledServices = whoisServices.filter(s => s.enabled && s.url);
+    
+    console.log(`Enabled WHOIS services: ${enabledServices.map(s => s.name).join(', ')}`);
+    
+    for (const service of enabledServices) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
         
         console.log(`Trying ${service.name} API for ${domain}`);
         
+        const headers: Record<string, string> = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          ...(service.headers || {})
+        };
+        
         const response = await fetch(service.url, {
-          headers: {
-            'User-Agent': 'Whois-Lookup-Service/1.0',
-            'Accept': 'application/json'
-          },
+          headers,
           signal: controller.signal
         });
         
@@ -246,8 +377,16 @@ async function queryWHOIS(domain: string): Promise<any> {
           continue;
         }
         
+        const contentType = response.headers.get('content-type') || '';
+        
+        // 跳过返回HTML的响应
+        if (contentType.includes('text/html')) {
+          console.log(`${service.name} returned HTML, skipping`);
+          continue;
+        }
+        
         const data = await response.json();
-        console.log(`${service.name} response:`, JSON.stringify(data, null, 2));
+        console.log(`${service.name} response received`);
         
         const parsedResult = service.parseResponse(data);
         
@@ -262,8 +401,43 @@ async function queryWHOIS(domain: string): Promise<any> {
       }
     }
     
+    // 尝试直接WHOIS服务器查询作为最后的备选方案
+    const whoisServer = WHOIS_SERVERS[tld];
+    if (whoisServer) {
+      console.log(`Trying direct WHOIS lookup via whois-servers.net proxy for ${domain}`);
+      try {
+        // 尝试使用公共WHOIS代理
+        const proxyUrl = `https://whois-servers.net/whois.php?domain=${domain}&server=${whoisServer}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(proxyUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'text/plain, */*'
+          },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const text = await response.text();
+          if (text && text.length > 100 && !text.includes('<html')) {
+            const parsed = parseWhoisText(text, domain);
+            if (parsed && (parsed.registrar !== 'Unknown' || parsed.registrationDate)) {
+              console.log('Direct WHOIS proxy successful');
+              return parsed;
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Direct WHOIS proxy failed:', error.message);
+      }
+    }
+    
     // 如果所有API都失败，抛出错误
-    throw new Error('All WHOIS APIs failed to return valid data');
+    throw new Error('所有WHOIS查询服务均无法返回有效数据。如需查询国别域名（如.cn），请配置WHOISFREAKS_API_KEY或IP2WHOIS_API_KEY环境变量。');
     
   } catch (error) {
     console.error(`WHOIS query failed for ${domain}:`, error);
