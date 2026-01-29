@@ -124,7 +124,8 @@ const DomainLookup = () => {
         setError(lookupResult.error);
       } else {
         addQuery(normalizedDomain);
-        fetchPricing(normalizedDomain);
+        // Pass whether domain is registered based on successful lookup
+        fetchPricing(normalizedDomain, true);
       }
     } catch (error) {
       setError('网络错误，请稍后重试');
