@@ -14,7 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      whois_cache: {
+        Row: {
+          created_at: string
+          domain: string
+          expires_at: string
+          id: string
+          result: Json
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          expires_at?: string
+          id?: string
+          result: Json
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          expires_at?: string
+          id?: string
+          result?: Json
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
