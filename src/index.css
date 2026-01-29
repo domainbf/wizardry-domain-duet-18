@@ -2,48 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Whois Wizardry Design System - Professional domain lookup theme */
+/* RDAP Domain Lookup - Clean minimal design */
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 9%;
+    
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+    
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 9%;
+    
+    --radius: 0.5rem;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+  }
+
+  .dark {
+    --background: 0 0% 9%;
     --foreground: 0 0% 98%;
     
-    /* Professional blue-purple gradient theme */
-    --primary: 258 90% 66%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 262 83% 58%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
     
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 98%;
     
-    --accent: 258 100% 80%;
-    --accent-foreground: 240 10% 3.9%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
     
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
     
-    --card: 240 6% 10%;
+    --card: 0 0% 12%;
     --card-foreground: 0 0% 98%;
     
-    --popover: 240 6% 10%;
+    --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
     
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 98%;
     
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 258 90% 66%;
-    
-    --radius: 0.75rem;
-    
-    /* Custom gradients and effects */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-background: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(248 10% 6%));
-    --shadow-glow: 0 0 40px hsl(var(--primary) / 0.3);
-    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.4);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --success: 142 76% 46%;
+    --warning: 38 92% 60%;
   }
 }
 
@@ -53,61 +80,29 @@
   }
   
   body {
-    @apply bg-background text-foreground;
-    background: var(--gradient-background);
-    min-height: 100vh;
-  }
-  
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    @apply bg-muted;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: var(--gradient-primary);
-    border-radius: 4px;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
-  .gradient-text {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .info-row {
+    @apply flex border border-border rounded-lg overflow-hidden;
   }
   
-  .glass-card {
-    background: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.5);
-    box-shadow: var(--shadow-card);
+  .info-row-label {
+    @apply px-4 py-3 bg-muted text-muted-foreground text-sm min-w-[100px] flex items-center;
   }
   
-  .glow-effect {
-    box-shadow: var(--shadow-glow);
+  .info-row-value {
+    @apply px-4 py-3 flex-1 text-sm font-medium;
   }
   
-  .animate-pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
+  .ns-row {
+    @apply flex items-center justify-between border border-border rounded-lg px-4 py-3;
   }
   
-  @keyframes pulse-glow {
-    0%, 100% {
-      box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
-    }
-    50% {
-      box-shadow: 0 0 40px hsl(var(--primary) / 0.4);
-    }
-  }
-  
-  .whois-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
+  .section-title {
+    @apply flex items-center gap-2 text-sm font-semibold mb-3;
   }
 }
