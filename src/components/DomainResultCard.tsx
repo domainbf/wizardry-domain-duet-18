@@ -61,8 +61,14 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr || dateStr === 'N/A') return 'N/A';
+    // If already in Chinese format (e.g., "2026年05月01日"), return as-is
+    if (dateStr.includes('年') && dateStr.includes('月')) {
+      return dateStr;
+    }
+    // Try to parse ISO format dates
     try {
       const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
       return date.toLocaleString('zh-CN', {
         year: 'numeric',
         month: '2-digit',
