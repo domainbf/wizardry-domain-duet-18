@@ -26,17 +26,42 @@ interface WhoisData {
 
 // 域名状态中英文映射
 const STATUS_MAPPING: Record<string, string> = {
+  // Client statuses
   'client delete prohibited': '客户端删除禁止',
   'client transfer prohibited': '客户端转移禁止', 
   'client update prohibited': '客户端更新禁止',
-  'clientDeleteProhibited': '客户端删除禁止',
-  'clientTransferProhibited': '客户端转移禁止',
-  'clientUpdateProhibited': '客户端更新禁止',
-  'serverDeleteProhibited': '服务器删除禁止',
-  'serverTransferProhibited': '服务器转移禁止',
-  'serverUpdateProhibited': '服务器更新禁止',
+  'client hold': '客户端暂停',
+  'client renew prohibited': '客户端续费禁止',
+  'clientdeleteprohibited': '客户端删除禁止',
+  'clienttransferprohibited': '客户端转移禁止',
+  'clientupdateprohibited': '客户端更新禁止',
+  'clienthold': '客户端暂停',
+  'clientrenewprohibited': '客户端续费禁止',
+  // Server statuses
+  'server delete prohibited': '服务器删除禁止',
+  'server transfer prohibited': '服务器转移禁止',
+  'server update prohibited': '服务器更新禁止',
+  'server hold': '服务器暂停',
+  'server renew prohibited': '服务器续费禁止',
+  'serverdeleteprohibited': '服务器删除禁止',
+  'servertransferprohibited': '服务器转移禁止',
+  'serverupdateprohibited': '服务器更新禁止',
+  'serverhold': '服务器暂停',
+  'serverrenewprohibited': '服务器续费禁止',
+  // Other statuses
   'ok': '正常',
   'active': '激活',
+  'inactive': '未激活',
+  'pending delete': '待删除',
+  'pending transfer': '待转移',
+  'pending update': '待更新',
+  'pending create': '待创建',
+  'pending renew': '待续费',
+  'redemption period': '赎回期',
+  'auto renew period': '自动续费期',
+  'transfer period': '转移期',
+  'add period': '添加期',
+  'renew period': '续费期',
 };
 
 interface DomainResultCardProps {
@@ -84,37 +109,50 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const getStatusChinese = (status: string) => {
-    const key = status.toLowerCase().replace(/https?:\/\/[^\s]+/g, '').trim();
-    return STATUS_MAPPING[key] || STATUS_MAPPING[status] || status.split('/').pop() || status;
+    // Remove URLs and extra spaces, convert to lowercase
+    const cleaned = status.toLowerCase().replace(/https?:\/\/[^\s]+/g, '').trim();
+    // Try exact match first
+    if (STATUS_MAPPING[cleaned]) return STATUS_MAPPING[cleaned];
+    // Try without spaces
+    const noSpaces = cleaned.replace(/\s+/g, '');
+    if (STATUS_MAPPING[noSpaces]) return STATUS_MAPPING[noSpaces];
+    // Try original status
+    if (STATUS_MAPPING[status]) return STATUS_MAPPING[status];
+    // Extract the last part after slash if exists
+    const lastPart = status.split('/').pop()?.trim() || status;
+    const lastPartLower = lastPart.toLowerCase();
+    if (STATUS_MAPPING[lastPartLower]) return STATUS_MAPPING[lastPartLower];
+    const lastPartNoSpaces = lastPartLower.replace(/\s+/g, '');
+    if (STATUS_MAPPING[lastPartNoSpaces]) return STATUS_MAPPING[lastPartNoSpaces];
+    return lastPart;
   };
 
   return (
     <Card className="border">
       <CardContent className="p-0">
-        {/* Header with domain and tabs */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b">
-          <h2 className="text-xl font-bold uppercase">{data.domain}</h2>
-          <Badge variant="default" className="text-xs">
-            {data.source === 'primary' ? 'RDAP' : 'WHOIS'}
-          </Badge>
-        </div>
-
         <Tabs defaultValue="overview" className="w-full">
-          <div className="px-6 pt-4 border-b">
-            <TabsList className="bg-transparent p-0 h-auto gap-2">
-              <TabsTrigger 
-                value="overview" 
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-sm"
-              >
-                概览
-              </TabsTrigger>
-              <TabsTrigger 
-                value="raw" 
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-sm"
-              >
-                原始数据
-              </TabsTrigger>
-            </TabsList>
+          {/* Header with domain on left, badge and tabs on right */}
+          <div className="flex items-center justify-between px-6 py-4 border-b">
+            <h2 className="text-xl font-bold uppercase">{data.domain}</h2>
+            <div className="flex items-center gap-3">
+              <TabsList className="bg-transparent p-0 h-auto gap-2">
+                <TabsTrigger 
+                  value="overview" 
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-sm"
+                >
+                  概览
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="raw" 
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-sm"
+                >
+                  原始数据
+                </TabsTrigger>
+              </TabsList>
+              <Badge variant="default" className="text-xs">
+                {data.source === 'primary' ? 'RDAP' : 'WHOIS'}
+              </Badge>
+            </div>
           </div>
 
           <TabsContent value="overview" className="p-6 space-y-6 mt-0">
