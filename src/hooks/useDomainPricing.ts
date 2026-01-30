@@ -25,10 +25,14 @@ export const useDomainPricing = () => {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('Pricing API response:', data);
+        const responseData = await response.json();
+        console.log('Pricing API response:', responseData);
+        
+        // API returns nested data: { code: 200, data: { premium, register, renew, ... } }
+        const data = responseData.data || responseData;
+        
         setPricing({
-          premium: data.premium || data.is_premium || false,
+          premium: data.premium === true || data.premium === 'true',
           registerPrice: data.register || data.register_price || data.registerPrice || data.price || 0,
           renewPrice: data.renew || data.renew_price || data.renewPrice || 0,
           label: isRegistered ? '已注册' : '可注册'

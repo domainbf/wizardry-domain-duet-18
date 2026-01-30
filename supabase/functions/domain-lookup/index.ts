@@ -738,13 +738,46 @@ async function performDualLookup(domain: string): Promise<any> {
         console.log(`Attempting direct WHOIS query for ${domain}`);
         const whoisText = await queryWhoisDirect(domain);
         
-        if (whoisText && whoisText.length > 50) {
+        // 检查域名是否未注册 - 短响应或包含未注册标识
+        const textLower = whoisText.toLowerCase();
+        const notFoundIndicators = [
+          'no matching record', 'no match', 'not found', 'no data found',
+          'domain is not registered', 'available for registration', 
+          'status: free', 'status: available', 'no entries found',
+          'no object found', 'object does not exist', 'not been registered',
+          'domain name has not been registered', 'the domain has not been registered'
+        ];
+        
+        const isNotRegistered = whoisText.length < 100 || 
+          notFoundIndicators.some(indicator => textLower.includes(indicator));
+        
+        if (isNotRegistered && !textLower.includes('registrar:') && 
+            !textLower.includes('name server:') && !textLower.includes('creation date:')) {
+          return {
+            error: `域名 ${domain} 未注册，该域名可供注册使用`,
+            errorType: 'domain_not_found'
+          };
+        }
+        
+        if (whoisText && whoisText.length > 20) {
           const whoisResult = parseWhoisText(whoisText, domain);
           if (whoisResult && (whoisResult.registrar !== 'Unknown' || 
               whoisResult.registrationDate || whoisResult.nameServers.length > 0)) {
             results.primary = whoisResult;
             console.log(`WHOIS lookup successful for ${domain}`);
+          } else {
+            // 解析成功但没有有效数据，判断为未注册
+            return {
+              error: `域名 ${domain} 未注册，该域名可供注册使用`,
+              errorType: 'domain_not_found'
+            };
           }
+        } else {
+          // 响应太短，判断为未注册
+          return {
+            error: `域名 ${domain} 未注册，该域名可供注册使用`,
+            errorType: 'domain_not_found'
+          };
         }
       } catch (error) {
         console.log(`Direct WHOIS failed for ${domain}: ${error.message}`);
@@ -759,7 +792,7 @@ async function performDualLookup(domain: string): Promise<any> {
       }
     } else {
       console.log(`No WHOIS server found for .${tld}`);
-      errors.push(`WHOIS: No server for .${tld}`);
+      errors.push(`WHOIS: 不支持查询 .${tld} 后缀`);
     }
   }
 
@@ -774,13 +807,18 @@ async function performDualLookup(domain: string): Promise<any> {
     
     if (errors.some(e => e.includes('timeout') || e.includes('connection'))) {
       return {
-        error: `网络连接超时，请稍后重试。`,
+        error: `网络连接超时，请稍后重试`,
         errorType: 'network_error'
       };
     }
     
+    // 提供更清晰的错误信息
+    const errorMessage = errors.length > 0 
+      ? `查询失败：${errors.map(e => e.split(': ')[1] || e).filter(Boolean).join('，')}` 
+      : `查询失败：未能获取域名信息`;
+    
     return {
-      error: `查询失败：${errors.slice(0, 2).join('; ')}。请稍后重试。`,
+      error: errorMessage,
       errorType: 'query_failed',
       details: errors
     };
