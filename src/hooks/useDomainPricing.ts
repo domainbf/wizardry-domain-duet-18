@@ -16,17 +16,25 @@ export const useDomainPricing = () => {
     setPricing(null);
     
     try {
-      const response = await fetch(`https://api.tian.hu/pricing/${encodeURIComponent(domain)}`);
+      // Try different API endpoint formats
+      const response = await fetch(`https://api.tian.hu/pricing/${encodeURIComponent(domain)}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Pricing API response:', data);
         setPricing({
-          premium: data.premium || false,
-          registerPrice: data.register || 0,
-          renewPrice: data.renew || 0,
+          premium: data.premium || data.is_premium || false,
+          registerPrice: data.register || data.register_price || data.registerPrice || data.price || 0,
+          renewPrice: data.renew || data.renew_price || data.renewPrice || 0,
           label: isRegistered ? '已注册' : '可注册'
         });
       } else {
+        console.log('Pricing API failed with status:', response.status);
         setPricing({
           premium: false,
           registerPrice: 0,
@@ -36,7 +44,12 @@ export const useDomainPricing = () => {
       }
     } catch (error) {
       console.error('Failed to fetch pricing:', error);
-      setPricing(null);
+      setPricing({
+        premium: false,
+        registerPrice: 0,
+        renewPrice: 0,
+        label: isRegistered ? '已注册' : '可注册'
+      });
     } finally {
       setLoading(false);
     }
