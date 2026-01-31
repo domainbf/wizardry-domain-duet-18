@@ -51,7 +51,11 @@ const STATUS_MAPPING: Record<string, string> = {
   // Other statuses
   'ok': '正常',
   'active': '激活',
+  'actif': '激活',        // 法语
+  'activo': '激活',       // 西班牙语
+  'ativo': '激活',        // 葡萄牙语
   'inactive': '未激活',
+  'inactif': '未激活',    // 法语
   'pending delete': '待删除',
   'pending transfer': '待转移',
   'pending update': '待更新',
@@ -62,6 +66,14 @@ const STATUS_MAPPING: Record<string, string> = {
   'transfer period': '转移期',
   'add period': '添加期',
   'renew period': '续费期',
+  // Additional common statuses
+  'connected': '已连接',
+  'registered': '已注册',
+  'available': '可用',
+  'locked': '已锁定',
+  'unlocked': '已解锁',
+  'pending verification': '待验证',
+  'verified': '已验证',
 };
 
 interface DomainResultCardProps {
