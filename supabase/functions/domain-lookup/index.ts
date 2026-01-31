@@ -1155,6 +1155,9 @@ const NOT_FOUND_INDICATORS = [
 
 // 解析WHOIS文本响应（增强版）
 function parseWhoisText(text: string, domain: string): any {
+  // 记录原始响应以便调试
+  console.log(`Parsing WHOIS response for ${domain}, length: ${text.length}`);
+  
   const lines = text.split('\n');
   const result: any = { 
     domain,
@@ -1176,78 +1179,192 @@ function parseWhoisText(text: string, domain: string): any {
   let hasValidDates = false;
   let hasNameServers = false;
   
-  // 增强的注册商识别正则
-  const registrarPatterns = [
-    /registrar:\s*(.+)/i,
-    /sponsoring registrar:\s*(.+)/i,
-    /registrar name:\s*(.+)/i,
-    /registrar organization:\s*(.+)/i,
-    /注册商:\s*(.+)/i,
-    /registrant:\s*(.+)/i,
+  // 增强的注册商识别正则（支持多种语言格式，按优先级排序）
+  // 高优先级模式（精确匹配 registrar）
+  const registrarPrimaryPatterns = [
+    /^registrar:\s*(.+)/i,
+    /^sponsoring registrar:\s*(.+)/i,
+    /^registrar name:\s*(.+)/i,
+    /^registrar organization:\s*(.+)/i,
+    /^注册商:\s*(.+)/i,
+    /^域名注册商:\s*(.+)/i,
+    /^bureau d'enregistrement:\s*(.+)/i,  // 法语
+    /^registraire:\s*(.+)/i,               // 法语
+    /^registro:\s*(.+)/i,                  // 西班牙语/葡萄牙语
+    /^registrador:\s*(.+)/i,               // 西班牙语
+    /^レジストラ:\s*(.+)/i,                // 日语
+    /^등록대행자:\s*(.+)/i,                // 韩语
+    /^регистратор:\s*(.+)/i,              // 俄语
   ];
   
-  // 增强的日期识别正则
+  // 低优先级模式（可能匹配到其他信息，仅在高优先级失败时使用）
+  const registrarSecondaryPatterns = [
+    /^registrant name:\s*(.+)/i,
+    /^holder:\s*(.+)/i,
+    /^domain holder:\s*(.+)/i,
+    /^owner:\s*(.+)/i,
+    /^titulaire:\s*(.+)/i,                 // 法语
+    /^registrante:\s*(.+)/i,               // 意大利语
+    /^登録者:\s*(.+)/i,                    // 日语
+  ];
+  
+  // 跳过的区块标记（这些区块内的数据不应作为主要域名信息）
+  const skipBlockMarkers = ['[HOLDER]', '[ADMIN_C]', '[TECH_C]', '[BILLING_C]', '[ADMIN-C]', '[TECH-C]', '[BILLING-C]'];
+  
+  // 增强的日期识别正则（支持全球格式）
   const creationDatePatterns = [
     /creation date:\s*(.+)/i,
     /created:\s*(.+)/i,
     /created on:\s*(.+)/i,
-    /registration time:\s*(.+)/i,
-    /registered on:\s*(.+)/i,
-    /registration date:\s*(.+)/i,
-    /domain registered:\s*(.+)/i,
-    /注册时间:\s*(.+)/i,
-    /creation:\s*(.+)/i,
     /created date:\s*(.+)/i,
-    /domain create date:\s*(.+)/i,
-    /record created:\s*(.+)/i,
+    /create date:\s*(.+)/i,
+    /registration time:\s*(.+)/i,
+    /registration date:\s*(.+)/i,
+    /registered on:\s*(.+)/i,
     /registered:\s*(.+)/i,
+    /registered date:\s*(.+)/i,
+    /domain registered:\s*(.+)/i,
+    /domain create date:\s*(.+)/i,
+    /domain created:\s*(.+)/i,
+    /record created:\s*(.+)/i,
+    /record create date:\s*(.+)/i,
+    /activation date:\s*(.+)/i,
+    /activated:\s*(.+)/i,
+    /commencement date:\s*(.+)/i,
+    /注册时间:\s*(.+)/i,
+    /注册日期:\s*(.+)/i,
+    /创建日期:\s*(.+)/i,
+    /creation:\s*(.+)/i,
+    /date de création:\s*(.+)/i,          // 法语
+    /créé le:\s*(.+)/i,                   // 法语
+    /fecha de creación:\s*(.+)/i,         // 西班牙语
+    /fecha de registro:\s*(.+)/i,         // 西班牙语
+    /data de criação:\s*(.+)/i,           // 葡萄牙语
+    /data de registro:\s*(.+)/i,          // 葡萄牙语
+    /登録年月日:\s*(.+)/i,                // 日语
+    /作成日:\s*(.+)/i,                    // 日语
+    /등록일:\s*(.+)/i,                    // 韩语
+    /дата регистрации:\s*(.+)/i,         // 俄语
+    /created-date:\s*(.+)/i,
+    /first registered:\s*(.+)/i,
+    /domain create:\s*(.+)/i,
+    /anniversary date:\s*(.+)/i,
+    /initial registration:\s*(.+)/i,
   ];
   
   const expirationDatePatterns = [
     /expiry date:\s*(.+)/i,
     /expires:\s*(.+)/i,
-    /expiration date:\s*(.+)/i,
     /expires on:\s*(.+)/i,
+    /expiration date:\s*(.+)/i,
+    /expiration:\s*(.+)/i,
     /expiration time:\s*(.+)/i,
-    /registry expiry date:\s*(.+)/i,
-    /paid-till:\s*(.+)/i,
     /expire date:\s*(.+)/i,
-    /过期时间:\s*(.+)/i,
-    /domain expiration date:\s*(.+)/i,
-    /renewal date:\s*(.+)/i,
     /expire:\s*(.+)/i,
-    /valid until:\s*(.+)/i,
+    /registry expiry date:\s*(.+)/i,
+    /registrar registration expiration date:\s*(.+)/i,
+    /domain expiration date:\s*(.+)/i,
+    /domain expires:\s*(.+)/i,
     /record expires:\s*(.+)/i,
+    /record expiry:\s*(.+)/i,
+    /renewal date:\s*(.+)/i,
+    /renewal:\s*(.+)/i,
+    /renew date:\s*(.+)/i,
+    /valid until:\s*(.+)/i,
+    /valid through:\s*(.+)/i,
+    /valid till:\s*(.+)/i,
+    /validity:\s*(.+)/i,
+    /paid-till:\s*(.+)/i,
+    /paid till:\s*(.+)/i,
+    /billing date:\s*(.+)/i,
+    /过期时间:\s*(.+)/i,
+    /过期日期:\s*(.+)/i,
+    /到期日期:\s*(.+)/i,
+    /有效期至:\s*(.+)/i,
+    /date d'expiration:\s*(.+)/i,         // 法语
+    /expire le:\s*(.+)/i,                 // 法语
+    /fecha de expiración:\s*(.+)/i,       // 西班牙语
+    /fecha de vencimiento:\s*(.+)/i,      // 西班牙语
+    /data de expiração:\s*(.+)/i,         // 葡萄牙语
+    /data de validade:\s*(.+)/i,          // 葡萄牙语
+    /有効期限:\s*(.+)/i,                  // 日语
+    /満了日:\s*(.+)/i,                    // 日语
+    /만료일:\s*(.+)/i,                    // 韩语
+    /дата окончания:\s*(.+)/i,           // 俄语
+    /expired:\s*(.+)/i,
+    /expiry:\s*(.+)/i,
+    /due date:\s*(.+)/i,
   ];
   
   const updateDatePatterns = [
     /updated date:\s*(.+)/i,
+    /updated:\s*(.+)/i,
+    /updated on:\s*(.+)/i,
     /last updated:\s*(.+)/i,
-    /changed:\s*(.+)/i,
-    /modified:\s*(.+)/i,
-    /last modified:\s*(.+)/i,
-    /更新时间:\s*(.+)/i,
+    /last updated on:\s*(.+)/i,
     /last update:\s*(.+)/i,
+    /last modification:\s*(.+)/i,
+    /last modified:\s*(.+)/i,
+    /last modified on:\s*(.+)/i,
+    /modification date:\s*(.+)/i,
+    /modified:\s*(.+)/i,
+    /modified on:\s*(.+)/i,
+    /changed:\s*(.+)/i,
+    /changed on:\s*(.+)/i,
+    /change date:\s*(.+)/i,
     /domain last updated:\s*(.+)/i,
     /record last updated:\s*(.+)/i,
+    /更新时间:\s*(.+)/i,
+    /更新日期:\s*(.+)/i,
+    /最后更新:\s*(.+)/i,
+    /最終更新:\s*(.+)/i,                  // 日语
+    /date de modification:\s*(.+)/i,      // 法语
+    /dernière modification:\s*(.+)/i,     // 法语 (塞内加尔格式)
+    /fecha de actualización:\s*(.+)/i,    // 西班牙语
+    /data de atualização:\s*(.+)/i,       // 葡萄牙语
+    /дата обновления:\s*(.+)/i,          // 俄语
   ];
   
   const nameServerPatterns = [
     /name server:\s*(.+)/i,
-    /nserver:\s*(.+)/i,
     /nameserver:\s*(.+)/i,
+    /name servers:\s*(.+)/i,
+    /nameservers:\s*(.+)/i,
+    /nserver:\s*(.+)/i,
+    /ns:\s*(.+)/i,
     /dns:\s*(.+)/i,
     /dns server:\s*(.+)/i,
-    /name servers:\s*(.+)/i,
+    /dns servers:\s*(.+)/i,
+    /primary ns:\s*(.+)/i,
+    /secondary ns:\s*(.+)/i,
+    /host name:\s*(.+)/i,
+    /hostname:\s*(.+)/i,
     /域名服务器:\s*(.+)/i,
+    /DNS服务器:\s*(.+)/i,
+    /serveur dns:\s*(.+)/i,               // 法语
+    /serveur de noms:\s*(.+)/i,           // 法语 (塞内加尔格式)
+    /servidor dns:\s*(.+)/i,              // 西班牙语/葡萄牙语
+    /ネームサーバ:\s*(.+)/i,              // 日语
+    /네임서버:\s*(.+)/i,                  // 韩语
   ];
   
   const statusPatterns = [
     /domain status:\s*(.+)/i,
     /status:\s*(.+)/i,
     /domain state:\s*(.+)/i,
+    /state:\s*(.+)/i,
+    /domain status code:\s*(.+)/i,
+    /epp status:\s*(.+)/i,
     /状态:\s*(.+)/i,
+    /域名状态:\s*(.+)/i,
+    /statut:\s*(.+)/i,                    // 法语
+    /estado:\s*(.+)/i,                    // 西班牙语/葡萄牙语
+    /ステータス:\s*(.+)/i,                // 日语
+    /상태:\s*(.+)/i,                      // 韩语
   ];
+  
+  let inSkipBlock = false;
+  let primaryRegistrarFound = false;
   
   for (const line of lines) {
     const trimmed = line.trim();
@@ -1255,15 +1372,56 @@ function parseWhoisText(text: string, domain: string): any {
       continue;
     }
     
-    // 注册商信息
-    for (const pattern of registrarPatterns) {
-      const match = trimmed.match(pattern);
-      if (match && match[1]) {
-        const value = match[1].trim();
-        if (value && value !== '-' && value.length > 1 && value.toLowerCase() !== 'unknown') {
-          result.registrar = value;
-          hasRegistrarInfo = true;
-          break;
+    // 检测全局字段（这些字段不属于联系人区块，应始终解析）
+    const isGlobalField = trimmed.match(/^(serveur de noms|name\s*server|nameserver|nserver|dns|dnssec|statut|status)/i);
+    
+    // 如果是全局字段，退出跳过模式
+    if (isGlobalField) {
+      inSkipBlock = false;
+    }
+    
+    // 检测并跳过联系人区块
+    if (skipBlockMarkers.some(marker => trimmed.toUpperCase().includes(marker))) {
+      inSkipBlock = true;
+      continue;
+    }
+    
+    // 空行可能结束跳过状态
+    if (!trimmed.includes(':') && inSkipBlock) {
+      // 保持跳过状态，直到遇到全局字段
+      continue;
+    }
+    
+    // 在跳过区块内，只跳过注册商相关解析，但仍解析全局字段
+    const skipRegistrarParsing = inSkipBlock && !isGlobalField;
+    
+    // 注册商信息（高优先级）- 只在非跳过区块内解析
+    if (!skipRegistrarParsing && !primaryRegistrarFound) {
+      for (const pattern of registrarPrimaryPatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim();
+          if (value && value !== '-' && value.length > 1 && value.toLowerCase() !== 'unknown') {
+            result.registrar = value;
+            hasRegistrarInfo = true;
+            primaryRegistrarFound = true;
+            break;
+          }
+        }
+      }
+    }
+    
+    // 注册商信息（低优先级，仅在未找到主要匹配时）- 只在非跳过区块内解析
+    if (!skipRegistrarParsing && !hasRegistrarInfo) {
+      for (const pattern of registrarSecondaryPatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim();
+          if (value && value !== '-' && value.length > 1 && value.toLowerCase() !== 'unknown') {
+            result.registrar = value;
+            hasRegistrarInfo = true;
+            break;
+          }
         }
       }
     }
@@ -1310,18 +1468,46 @@ function parseWhoisText(text: string, domain: string): any {
       }
     }
     
-    // DNS服务器
+    // DNS服务器（增强解析）
     for (const pattern of nameServerPatterns) {
       const match = trimmed.match(pattern);
       if (match && match[1]) {
-        const ns = match[1].trim().toLowerCase().split(/\s+/)[0];
-        if (ns && ns !== '-' && ns !== 'not available' && 
-            !result.nameServers.includes(ns) && 
-            (ns.includes('.') || ns.match(/^[a-z0-9-]+$/))) {
-          result.nameServers.push(ns);
-          hasNameServers = true;
+        // 分割可能包含多个NS的值（如 "ns1.example.com, ns2.example.com"）
+        const nsValues = match[1].trim().split(/[,;\s]+/);
+        for (const nsRaw of nsValues) {
+          const ns = nsRaw.toLowerCase().trim();
+          if (ns && 
+              ns !== '-' && 
+              ns !== 'not' &&
+              ns !== 'available' &&
+              ns !== 'none' &&
+              ns !== 'n/a' &&
+              ns.length > 3 &&
+              !result.nameServers.includes(ns) && 
+              (ns.includes('.') || ns.match(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/))) {
+            result.nameServers.push(ns);
+            hasNameServers = true;
+          }
         }
         break;
+      }
+    }
+    
+    // 额外的 NS 检测：检查独立的 FQDN 行（某些 WHOIS 格式）
+    if (trimmed.match(/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/i) && 
+        !trimmed.includes(':') && 
+        !trimmed.includes(' ') &&
+        trimmed.length > 5 &&
+        trimmed.length < 100) {
+      const potentialNs = trimmed.toLowerCase();
+      // 检查是否看起来像 NS（包含 ns, dns, name 等）
+      if ((potentialNs.includes('ns') || 
+           potentialNs.includes('dns') || 
+           potentialNs.includes('name') ||
+           potentialNs.match(/^ns\d*\./)) &&
+          !result.nameServers.includes(potentialNs)) {
+        result.nameServers.push(potentialNs);
+        hasNameServers = true;
       }
     }
     
@@ -1343,16 +1529,20 @@ function parseWhoisText(text: string, domain: string): any {
       }
     }
     
-    // DNSSEC
-    if (trimmed.toLowerCase().includes('dnssec:')) {
+    // DNSSEC（增强检测）
+    if (trimmed.toLowerCase().includes('dnssec')) {
       const dnssecMatch = trimmed.match(/dnssec:\s*(.+)/i);
       if (dnssecMatch && dnssecMatch[1]) {
         const dnssecValue = dnssecMatch[1].trim().toLowerCase();
-        result.dnssec = dnssecValue.includes('signed') || 
-                       dnssecValue === 'yes' || 
-                       dnssecValue === 'enabled' ||
-                       dnssecValue === 'active' ||
-                       dnssecValue === '是';
+        // 明确检查启用状态
+        const enabledIndicators = ['signed', 'yes', 'enabled', 'active', '是', 'oui', 'signée'];
+        const disabledIndicators = ['unsigned', 'no', 'disabled', 'inactive', '否', 'non', 'not signed'];
+        
+        if (disabledIndicators.some(ind => dnssecValue.includes(ind))) {
+          result.dnssec = false;
+        } else if (enabledIndicators.some(ind => dnssecValue.includes(ind))) {
+          result.dnssec = true;
+        }
       }
     }
     
@@ -1392,9 +1582,9 @@ function parseWhoisText(text: string, domain: string): any {
   return result;
 }
 
-// 格式化日期为中文年月日格式（增强版）
+// 格式化日期为中文年月日格式（全球格式支持）
 function formatDate(dateStr: string): string {
-  if (!dateStr || dateStr === '-' || dateStr.toLowerCase() === 'n/a') {
+  if (!dateStr || dateStr === '-' || dateStr.toLowerCase() === 'n/a' || dateStr.toLowerCase() === 'not available') {
     return '';
   }
   
@@ -1404,41 +1594,66 @@ function formatDate(dateStr: string): string {
       .replace(/\s*\(.*?\)/g, '')  // 移除括号内容
       .replace(/\s*UTC.*/i, '')     // 移除UTC后缀
       .replace(/\s*GMT.*/i, '')     // 移除GMT后缀
+      .replace(/\s*\+\d{2}:\d{2}.*/, '') // 移除时区偏移
+      .replace(/\s*[+-]\d{4}.*/, '')     // 移除时区偏移格式2
       .replace(/T/, ' ')            // T替换为空格
       .replace(/Z$/, '')            // 移除Z后缀
+      .replace(/\s+/g, ' ')         // 规范化空格
       .trim();
     
-    // 尝试直接解析ISO格式
-    let date = new Date(cleanDateStr);
-    if (!isNaN(date.getTime())) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}年${month}月${day}日`;
-    }
+    // 扩展的月份名称映射（支持多语言）
+    const monthMap: Record<string, number> = {
+      // 英文
+      'jan': 1, 'january': 1, 'feb': 2, 'february': 2, 'mar': 3, 'march': 3,
+      'apr': 4, 'april': 4, 'may': 5, 'jun': 6, 'june': 6,
+      'jul': 7, 'july': 7, 'aug': 8, 'august': 8, 'sep': 9, 'september': 9,
+      'oct': 10, 'october': 10, 'nov': 11, 'november': 11, 'dec': 12, 'december': 12,
+      // 法语
+      'janvier': 1, 'février': 2, 'fevrier': 2, 'mars': 3, 'avril': 4, 'mai': 5,
+      'juin': 6, 'juillet': 7, 'août': 8, 'aout': 8, 'septembre': 9, 'octobre': 10,
+      'novembre': 11, 'décembre': 12, 'decembre': 12,
+      // 西班牙语
+      'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+      'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12,
+      // 葡萄牙语
+      'janeiro': 1, 'fevereiro': 2, 'março': 3, 'marco': 3, 'maio': 5, 'junho': 6,
+      'julho': 7, 'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12,
+      // 德语
+      'januar': 1, 'februar': 2, 'marz': 3, 'märz': 3, 'juni': 6, 'juli': 7,
+      'oktober': 10, 'dezember': 12,
+      // 意大利语
+      'gennaio': 1, 'febbraio': 2, 'aprile': 4, 'maggio': 5, 'giugno': 6,
+      'luglio': 7, 'settembre': 9, 'ottobre': 10, 'dicembre': 12,
+    };
     
-    // 尝试解析各种日期格式
+    // 尝试各种日期格式的正则匹配
     const datePatterns = [
-      // ISO格式
+      // ISO格式 (YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD)
       { pattern: /(\d{4})-(\d{1,2})-(\d{1,2})/, order: 'ymd' },
       { pattern: /(\d{4})\.(\d{1,2})\.(\d{1,2})/, order: 'ymd' },
       { pattern: /(\d{4})\/(\d{1,2})\/(\d{1,2})/, order: 'ymd' },
-      // 美式格式
+      // 紧凑格式 YYYYMMDD
+      { pattern: /^(\d{4})(\d{2})(\d{2})$/, order: 'ymd' },
+      // 美式格式 MM/DD/YYYY, MM-DD-YYYY
       { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{4})/, order: 'mdy' },
       { pattern: /(\d{1,2})-(\d{1,2})-(\d{4})/, order: 'mdy' },
-      // 欧式格式
+      // 欧式格式 DD.MM.YYYY, DD/MM/YYYY
       { pattern: /(\d{1,2})\.(\d{1,2})\.(\d{4})/, order: 'dmy' },
       // 中文格式
       { pattern: /(\d{4})年(\d{1,2})月(\d{1,2})日/, order: 'ymd' },
-      // 日期带月份名称
-      { pattern: /(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{4})/i, order: 'dmy_text' },
-      { pattern: /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i, order: 'mdy_text' },
+      // 日文格式
+      { pattern: /(\d{4})年(\d{1,2})月(\d{1,2})日/, order: 'ymd' },
+      // 英文日期格式 "DD Mon YYYY", "DD Month YYYY"
+      { pattern: /(\d{1,2})\s+([a-zA-Zéûàç]+)\s+(\d{4})/i, order: 'dmy_text' },
+      // 英文日期格式 "Mon DD, YYYY", "Month DD YYYY"
+      { pattern: /([a-zA-Zéûàç]+)\s+(\d{1,2}),?\s+(\d{4})/i, order: 'mdy_text' },
+      // 英文日期格式 "DD-Mon-YYYY"
+      { pattern: /(\d{1,2})-([a-zA-Z]+)-(\d{4})/i, order: 'dmy_text' },
+      // 英文日期格式 "YYYY-Mon-DD"
+      { pattern: /(\d{4})-([a-zA-Z]+)-(\d{1,2})/i, order: 'ymd_text' },
+      // 纯数字格式尝试解析 DD/MM/YY 或 MM/DD/YY (假设2位年份)
+      { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{2})$/, order: 'dmy_short' },
     ];
-    
-    const monthMap: Record<string, number> = {
-      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
-    };
     
     for (const { pattern, order } of datePatterns) {
       const match = cleanDateStr.match(pattern);
@@ -1455,28 +1670,74 @@ function formatDate(dateStr: string): string {
           case 'dmy':
             [, day, month, year] = match;
             break;
-          case 'dmy_text':
+          case 'dmy_text': {
             day = match[1];
-            month = String(monthMap[match[2].toLowerCase().substring(0, 3)]);
+            const monthName = match[2].toLowerCase();
+            const monthNum = monthMap[monthName] || monthMap[monthName.substring(0, 3)];
+            if (!monthNum) continue;
+            month = String(monthNum);
             year = match[3];
             break;
-          case 'mdy_text':
-            month = String(monthMap[match[1].toLowerCase().substring(0, 3)]);
+          }
+          case 'mdy_text': {
+            const monthName = match[1].toLowerCase();
+            const monthNum = monthMap[monthName] || monthMap[monthName.substring(0, 3)];
+            if (!monthNum) continue;
+            month = String(monthNum);
             day = match[2];
             year = match[3];
             break;
+          }
+          case 'ymd_text': {
+            year = match[1];
+            const monthName = match[2].toLowerCase();
+            const monthNum = monthMap[monthName] || monthMap[monthName.substring(0, 3)];
+            if (!monthNum) continue;
+            month = String(monthNum);
+            day = match[3];
+            break;
+          }
+          case 'dmy_short': {
+            day = match[1];
+            month = match[2];
+            const shortYear = parseInt(match[3]);
+            year = String(shortYear > 50 ? 1900 + shortYear : 2000 + shortYear);
+            break;
+          }
           default:
             continue;
         }
         
         if (year && month && day) {
-          return `${year}年${String(parseInt(month)).padStart(2, '0')}月${String(parseInt(day)).padStart(2, '0')}日`;
+          const y = parseInt(year);
+          const m = parseInt(month);
+          const d = parseInt(day);
+          
+          // 验证日期有效性
+          if (y >= 1990 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+            return `${year}年${String(m).padStart(2, '0')}月${String(d).padStart(2, '0')}日`;
+          }
         }
       }
     }
     
-    // 无法解析，返回原始字符串
-    return cleanDateStr;
+    // 尝试直接用 Date 解析
+    const date = new Date(cleanDateStr);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      if (year >= 1990 && year <= 2100) {
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}年${month}月${day}日`;
+      }
+    }
+    
+    // 无法解析，返回原始字符串（如果看起来像日期）
+    if (/\d{4}/.test(cleanDateStr)) {
+      return cleanDateStr;
+    }
+    
+    return '';
   } catch {
     return dateStr;
   }
