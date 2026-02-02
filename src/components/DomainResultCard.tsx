@@ -96,13 +96,91 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     }
   };
 
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr || dateStr === 'N/A') return null;
+    // Handle Chinese format: 2001年04月15日
+    const chineseMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+    if (chineseMatch) {
+      return new Date(parseInt(chineseMatch[1]), parseInt(chineseMatch[2]) - 1, parseInt(chineseMatch[3]));
+    }
+    // Try ISO format
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) return date;
+    return null;
+  };
+
+  const getRegistrationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
+    const regDate = parseDate(data.registrationDate);
+    if (!regDate) return null;
+    
+    const now = new Date();
+    const diffTime = now.getTime() - regDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffYears = Math.floor(diffDays / 365);
+    
+    if (diffDays <= 30) return { text: '新注册', variant: 'destructive' };
+    if (diffDays <= 90) return { text: '3月内注册', variant: 'secondary' };
+    if (diffDays <= 365) return { text: '1年内注册', variant: 'secondary' };
+    if (diffYears >= 20) return { text: `${diffYears}年老米`, variant: 'default' };
+    if (diffYears >= 10) return { text: `${diffYears}年域名`, variant: 'default' };
+    if (diffYears >= 5) return { text: `${diffYears}年域名`, variant: 'outline' };
+    return null;
+  };
+
+  const getUpdateTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
+    const updateDate = parseDate(data.lastUpdated);
+    if (!updateDate) return null;
+    
+    const now = new Date();
+    const diffTime = now.getTime() - updateDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Check status for transfer-related info
+    const statusStr = data.status.join(' ').toLowerCase();
+    if (statusStr.includes('pending transfer') || statusStr.includes('pendingtransfer')) {
+      return { text: '转移中', variant: 'destructive' };
+    }
+    
+    if (diffDays <= 7) {
+      if (statusStr.includes('transfer')) return { text: '近期转移', variant: 'secondary' };
+      return { text: '刚刚续费', variant: 'secondary' };
+    }
+    if (diffDays <= 30) return { text: '近期更新', variant: 'outline' };
+    if (diffDays <= 90) return { text: '3月内更新', variant: 'outline' };
+    return null;
+  };
+
+  const getExpirationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
+    const expDate = parseDate(data.expirationDate);
+    if (!expDate) return null;
+    
+    const now = new Date();
+    const diffTime = expDate.getTime() - now.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Check status for special states
+    const statusStr = data.status.join(' ').toLowerCase();
+    if (statusStr.includes('redemption')) return { text: '赎回期', variant: 'destructive' };
+    if (statusStr.includes('pending delete') || statusStr.includes('pendingdelete')) return { text: '删除中', variant: 'destructive' };
+    if (statusStr.includes('auto renew')) return { text: '自动续费期', variant: 'secondary' };
+    
+    if (diffDays < 0) {
+      const expiredDays = Math.abs(diffDays);
+      if (expiredDays <= 30) return { text: `已过期${expiredDays}天`, variant: 'destructive' };
+      return { text: '已过期', variant: 'destructive' };
+    }
+    if (diffDays === 0) return { text: '今日到期', variant: 'destructive' };
+    if (diffDays <= 7) return { text: `剩余${diffDays}天`, variant: 'destructive' };
+    if (diffDays <= 30) return { text: `剩余${diffDays}天`, variant: 'secondary' };
+    if (diffDays <= 90) return { text: `剩余${diffDays}天`, variant: 'outline' };
+    return { text: `剩余${diffDays}天`, variant: 'outline' };
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr || dateStr === 'N/A') return 'N/A';
-    // If already in Chinese format (e.g., "2026年05月01日"), return as-is
     if (dateStr.includes('年') && dateStr.includes('月')) {
       return dateStr;
     }
-    // Try to parse ISO format dates
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
@@ -121,16 +199,11 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const getStatusChinese = (status: string) => {
-    // Remove URLs and extra spaces, convert to lowercase
     const cleaned = status.toLowerCase().replace(/https?:\/\/[^\s]+/g, '').trim();
-    // Try exact match first
     if (STATUS_MAPPING[cleaned]) return STATUS_MAPPING[cleaned];
-    // Try without spaces
     const noSpaces = cleaned.replace(/\s+/g, '');
     if (STATUS_MAPPING[noSpaces]) return STATUS_MAPPING[noSpaces];
-    // Try original status
     if (STATUS_MAPPING[status]) return STATUS_MAPPING[status];
-    // Extract the last part after slash if exists
     const lastPart = status.split('/').pop()?.trim() || status;
     const lastPartLower = lastPart.toLowerCase();
     if (STATUS_MAPPING[lastPartLower]) return STATUS_MAPPING[lastPartLower];
@@ -138,6 +211,10 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     if (STATUS_MAPPING[lastPartNoSpaces]) return STATUS_MAPPING[lastPartNoSpaces];
     return lastPart;
   };
+
+  const registrationTag = getRegistrationTag();
+  const updateTag = getUpdateTag();
+  const expirationTag = getExpirationTag();
 
   return (
     <Card className="border">
@@ -185,17 +262,38 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                   <div className="info-row-label">DNSSEC</div>
                   <div className="info-row-value">{data.dnssec ? '已启用' : '未启用'}</div>
                 </div>
-                <div className="info-row">
+              <div className="info-row">
                   <div className="info-row-label">注册时间</div>
-                  <div className="info-row-value">{formatDate(data.registrationDate)}</div>
+                  <div className="info-row-value flex items-center gap-2">
+                    <span>{formatDate(data.registrationDate)}</span>
+                    {registrationTag && (
+                      <Badge variant={registrationTag.variant} className="text-xs">
+                        {registrationTag.text}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="info-row">
                   <div className="info-row-label">更新时间</div>
-                  <div className="info-row-value">{formatDate(data.lastUpdated)}</div>
+                  <div className="info-row-value flex items-center gap-2">
+                    <span>{formatDate(data.lastUpdated)}</span>
+                    {updateTag && (
+                      <Badge variant={updateTag.variant} className="text-xs">
+                        {updateTag.text}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="info-row">
                   <div className="info-row-label">过期时间</div>
-                  <div className="info-row-value">{formatDate(data.expirationDate)}</div>
+                  <div className="info-row-value flex items-center gap-2">
+                    <span>{formatDate(data.expirationDate)}</span>
+                    {expirationTag && (
+                      <Badge variant={expirationTag.variant} className="text-xs">
+                        {expirationTag.text}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
