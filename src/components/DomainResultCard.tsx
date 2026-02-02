@@ -143,37 +143,39 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     <Card className="border">
       <CardContent className="p-0">
         <Tabs defaultValue="overview" className="w-full">
-          {/* Header with domain on left, badge and tabs on right */}
-          <div className="flex items-center justify-between px-6 py-4 border-b">
-            <h2 className="text-xl font-bold uppercase">{data.domain}</h2>
-            <div className="flex items-center gap-3">
-              <TabsList className="bg-transparent p-0 h-auto gap-2">
-                <TabsTrigger 
-                  value="overview" 
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-sm"
-                >
-                  概览
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="raw" 
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-4 py-1.5 text-sm"
-                >
-                  原始数据
-                </TabsTrigger>
-              </TabsList>
-              <Badge variant="default" className="text-xs">
-                {data.source === 'primary' ? 'RDAP' : 'WHOIS'}
-              </Badge>
-            </div>
+          {/* Header with domain name */}
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-xl font-bold uppercase break-all">{data.domain}</h2>
           </div>
 
           <TabsContent value="overview" className="p-6 space-y-6 mt-0">
-            {/* Domain Info */}
+            {/* Domain Info with tabs on right */}
             <div>
-              <h3 className="section-title">
-                <Info className="h-4 w-4" />
-                域名信息
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold">
+                  <Info className="h-4 w-4" />
+                  域名信息
+                </h3>
+                <div className="flex items-center gap-2">
+                  <TabsList className="bg-transparent p-0 h-auto gap-1">
+                    <TabsTrigger 
+                      value="overview" 
+                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
+                    >
+                      概览
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="raw" 
+                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
+                    >
+                      原始数据
+                    </TabsTrigger>
+                  </TabsList>
+                  <Badge variant="default" className="text-xs">
+                    {data.source === 'primary' ? 'RDAP' : 'WHOIS'}
+                  </Badge>
+                </div>
+              </div>
               <div className="space-y-2">
                 <div className="info-row">
                   <div className="info-row-label">注册商</div>
@@ -225,15 +227,15 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                 <div className="space-y-2">
                   {data.nameServers.map((ns, index) => (
                     <div key={index} className="ns-row">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground text-sm">NS{index + 1}:</span>
-                        <span className="text-sm font-mono">{ns}</span>
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="text-muted-foreground text-sm flex-shrink-0">NS{index + 1}:</span>
+                        <span className="text-sm font-mono truncate">{ns}</span>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => copyToClipboard(ns)}
-                        className="h-8"
+                        className="h-8 flex-shrink-0"
                       >
                         {copiedNs === ns ? (
                           <Check className="h-3 w-3" />
@@ -250,7 +252,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
           </TabsContent>
 
           <TabsContent value="raw" className="p-6 mt-0">
-            <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[500px] font-mono">
+            <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[500px] font-mono break-all whitespace-pre-wrap">
               {JSON.stringify(rawData || data, null, 2)}
             </pre>
           </TabsContent>
