@@ -1155,7 +1155,6 @@ const NOT_FOUND_INDICATORS = [
 
 // 解析WHOIS文本响应（增强版）
 function parseWhoisText(text: string, domain: string): any {
-  // 记录原始响应以便调试
   console.log(`Parsing WHOIS response for ${domain}, length: ${text.length}`);
   
   const lines = text.split('\n');
@@ -1169,7 +1168,8 @@ function parseWhoisText(text: string, domain: string): any {
     dnssec: false,
     lastUpdated: formatDate(new Date().toISOString()),
     source: 'whois' as const,
-    registrant: {}
+    registrant: {},
+    rawWhois: text  // 保存原始数据用于前端显示
   };
   
   const textLower = text.toLowerCase();
@@ -1250,6 +1250,11 @@ function parseWhoisText(text: string, domain: string): any {
     /domain create:\s*(.+)/i,
     /anniversary date:\s*(.+)/i,
     /initial registration:\s*(.+)/i,
+    /domain registered:\s*(.+)/i,
+    // 更多特殊格式
+    /nic-creation-date:\s*(.+)/i,
+    /domain-created:\s*(.+)/i,
+    /created\.+:\s*(.+)/i,
   ];
   
   const expirationDatePatterns = [
@@ -1294,6 +1299,13 @@ function parseWhoisText(text: string, domain: string): any {
     /expired:\s*(.+)/i,
     /expiry:\s*(.+)/i,
     /due date:\s*(.+)/i,
+    // 更多特殊格式（包括.bn等）
+    /nic-expiry-date:\s*(.+)/i,
+    /domain-expiry:\s*(.+)/i,
+    /expiry\.+:\s*(.+)/i,
+    /domain validity:\s*(.+)/i,
+    /valid to:\s*(.+)/i,
+    /expire on:\s*(.+)/i,
   ];
   
   const updateDatePatterns = [
@@ -1594,8 +1606,9 @@ function formatDate(dateStr: string): string {
       .replace(/\s*\(.*?\)/g, '')  // 移除括号内容
       .replace(/\s*UTC.*/i, '')     // 移除UTC后缀
       .replace(/\s*GMT.*/i, '')     // 移除GMT后缀
-      .replace(/\s*\+\d{2}:\d{2}.*/, '') // 移除时区偏移
-      .replace(/\s*[+-]\d{4}.*/, '')     // 移除时区偏移格式2
+      .replace(/\s*\+\d{2}:\d{2}.*/, '') // 移除时区偏移 +08:00
+      // 注意：不要使用 [+-]\d{4} 因为会匹配到 -2024 这样的年份
+      .replace(/\s+[+-]\d{4}$/, '')     // 移除行尾时区偏移格式 +0800（仅在行尾）
       .replace(/T/, ' ')            // T替换为空格
       .replace(/Z$/, '')            // 移除Z后缀
       .replace(/\s+/g, ' ')         // 规范化空格
@@ -1627,30 +1640,31 @@ function formatDate(dateStr: string): string {
     };
     
     // 尝试各种日期格式的正则匹配
+    // 注意：文本月份格式要优先，因为它们更精确
     const datePatterns = [
-      // ISO格式 (YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD)
+      // 文本月份格式优先（如 "20-Mar-2024"），因为更精确
+      // 英文日期格式 "DD-Mon-YYYY" (如 .bn 域名格式) - 允许后面有时间
+      { pattern: /(\d{1,2})-([a-zA-Z]{3,})-(\d{4})(?:\s|$|[T\s]\d)/i, order: 'dmy_text' },
+      // 英文日期格式 "DD Mon YYYY", "DD Month YYYY" - 允许后面有时间
+      { pattern: /(\d{1,2})\s+([a-zA-Zéûàç]+)\s+(\d{4})(?:\s|$|[T\s]\d)/i, order: 'dmy_text' },
+      // 英文日期格式 "Mon DD, YYYY", "Month DD YYYY"
+      { pattern: /([a-zA-Zéûàç]+)\s+(\d{1,2}),?\s+(\d{4})/i, order: 'mdy_text' },
+      // 英文日期格式 "YYYY-Mon-DD"
+      { pattern: /(\d{4})-([a-zA-Z]{3,})-(\d{1,2})/i, order: 'ymd_text' },
+      // ISO格式 (YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD) - 优先尝试
       { pattern: /(\d{4})-(\d{1,2})-(\d{1,2})/, order: 'ymd' },
       { pattern: /(\d{4})\.(\d{1,2})\.(\d{1,2})/, order: 'ymd' },
       { pattern: /(\d{4})\/(\d{1,2})\/(\d{1,2})/, order: 'ymd' },
       // 紧凑格式 YYYYMMDD
       { pattern: /^(\d{4})(\d{2})(\d{2})$/, order: 'ymd' },
-      // 美式格式 MM/DD/YYYY, MM-DD-YYYY
-      { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{4})/, order: 'mdy' },
-      { pattern: /(\d{1,2})-(\d{1,2})-(\d{4})/, order: 'mdy' },
-      // 欧式格式 DD.MM.YYYY, DD/MM/YYYY
+      // 中文/日文格式
+      { pattern: /(\d{4})年(\d{1,2})月(\d{1,2})日/, order: 'ymd' },
+      // 欧式格式 DD.MM.YYYY, DD/MM/YYYY (注意：可能与 MM/DD/YYYY 混淆)
       { pattern: /(\d{1,2})\.(\d{1,2})\.(\d{4})/, order: 'dmy' },
-      // 中文格式
-      { pattern: /(\d{4})年(\d{1,2})月(\d{1,2})日/, order: 'ymd' },
-      // 日文格式
-      { pattern: /(\d{4})年(\d{1,2})月(\d{1,2})日/, order: 'ymd' },
-      // 英文日期格式 "DD Mon YYYY", "DD Month YYYY"
-      { pattern: /(\d{1,2})\s+([a-zA-Zéûàç]+)\s+(\d{4})/i, order: 'dmy_text' },
-      // 英文日期格式 "Mon DD, YYYY", "Month DD YYYY"
-      { pattern: /([a-zA-Zéûàç]+)\s+(\d{1,2}),?\s+(\d{4})/i, order: 'mdy_text' },
-      // 英文日期格式 "DD-Mon-YYYY"
-      { pattern: /(\d{1,2})-([a-zA-Z]+)-(\d{4})/i, order: 'dmy_text' },
-      // 英文日期格式 "YYYY-Mon-DD"
-      { pattern: /(\d{4})-([a-zA-Z]+)-(\d{1,2})/i, order: 'ymd_text' },
+      // 美式格式 MM/DD/YYYY (不太常见于 WHOIS)
+      { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{4})/, order: 'mdy' },
+      // 纯数字格式 DD-MM-YYYY（欧式）
+      { pattern: /(\d{1,2})-(\d{1,2})-(\d{4})/, order: 'dmy' },
       // 纯数字格式尝试解析 DD/MM/YY 或 MM/DD/YY (假设2位年份)
       { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{2})$/, order: 'dmy_short' },
     ];

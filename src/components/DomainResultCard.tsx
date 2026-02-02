@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info, Shield, Server, Copy, Check } from 'lucide-react';
+import { Info, Shield, Server, Copy, Check, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface WhoisData {
@@ -76,6 +76,79 @@ const STATUS_MAPPING: Record<string, string> = {
   'verified': '已验证',
 };
 
+// 注册商官网映射
+const REGISTRAR_URLS: Record<string, string> = {
+  // 主流国际注册商
+  'godaddy': 'https://www.godaddy.com',
+  'godaddy.com': 'https://www.godaddy.com',
+  'godaddy.com, llc': 'https://www.godaddy.com',
+  'namecheap': 'https://www.namecheap.com',
+  'namecheap, inc.': 'https://www.namecheap.com',
+  'cloudflare': 'https://www.cloudflare.com',
+  'cloudflare, inc.': 'https://www.cloudflare.com',
+  'google': 'https://domains.google',
+  'google llc': 'https://domains.google',
+  'google domains': 'https://domains.google',
+  'amazon': 'https://aws.amazon.com/route53',
+  'amazon registrar': 'https://aws.amazon.com/route53',
+  'amazon registrar, inc.': 'https://aws.amazon.com/route53',
+  'dynadot': 'https://www.dynadot.com',
+  'dynadot, llc': 'https://www.dynadot.com',
+  'porkbun': 'https://www.porkbun.com',
+  'porkbun llc': 'https://www.porkbun.com',
+  'gandi': 'https://www.gandi.net',
+  'gandi sas': 'https://www.gandi.net',
+  'hover': 'https://www.hover.com',
+  'tucows': 'https://www.tucows.com',
+  'tucows domains': 'https://www.tucows.com',
+  'enom': 'https://www.enom.com',
+  'enom, llc': 'https://www.enom.com',
+  'name.com': 'https://www.name.com',
+  'name.com, inc.': 'https://www.name.com',
+  'register.com': 'https://www.register.com',
+  'network solutions': 'https://www.networksolutions.com',
+  'network solutions, llc': 'https://www.networksolutions.com',
+  'markmonitor': 'https://www.markmonitor.com',
+  'markmonitor inc.': 'https://www.markmonitor.com',
+  'csc corporate domains': 'https://www.cscglobal.com',
+  'key-systems': 'https://www.key-systems.net',
+  'key-systems gmbh': 'https://www.key-systems.net',
+  'ovh': 'https://www.ovh.com',
+  'ovh sas': 'https://www.ovh.com',
+  'ionos': 'https://www.ionos.com',
+  '1&1 ionos': 'https://www.ionos.com',
+  'united-domains': 'https://www.united-domains.de',
+  'epik': 'https://www.epik.com',
+  'epik, inc.': 'https://www.epik.com',
+  'njalla': 'https://njal.la',
+  'sav.com': 'https://www.sav.com',
+  'spaceship': 'https://www.spaceship.com',
+  // 中国注册商
+  '阿里云': 'https://wanwang.aliyun.com',
+  '万网': 'https://wanwang.aliyun.com',
+  'alibaba': 'https://wanwang.aliyun.com',
+  'alibaba cloud': 'https://wanwang.aliyun.com',
+  'hichina': 'https://wanwang.aliyun.com',
+  '腾讯云': 'https://dnspod.cloud.tencent.com',
+  'dnspod': 'https://www.dnspod.cn',
+  '新网': 'https://www.xinnet.com',
+  'xinnet': 'https://www.xinnet.com',
+  '西部数码': 'https://www.west.cn',
+  'west.cn': 'https://www.west.cn',
+  '爱名网': 'https://www.22.cn',
+  '22.cn': 'https://www.22.cn',
+  '易名': 'https://www.ename.net',
+  'ename': 'https://www.ename.net',
+  '华为云': 'https://www.huaweicloud.com',
+  // 其他亚洲注册商
+  'onamae': 'https://www.onamae.com',
+  'gmo': 'https://www.gmo.jp',
+  // 欧洲注册商
+  'eurodns': 'https://www.eurodns.com',
+  'strato': 'https://www.strato.de',
+  'hostinger': 'https://www.hostinger.com',
+};
+
 interface DomainResultCardProps {
   data: WhoisData;
   rawData?: any;
@@ -83,17 +156,44 @@ interface DomainResultCardProps {
 
 const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   const [copiedNs, setCopiedNs] = useState<string | null>(null);
+  const [copiedRaw, setCopiedRaw] = useState(false);
   const { toast } = useToast();
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (text: string, type: 'ns' | 'raw' = 'ns') => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedNs(text);
-      toast({ description: '已复制到剪贴板' });
-      setTimeout(() => setCopiedNs(null), 2000);
+      if (type === 'raw') {
+        setCopiedRaw(true);
+        toast({ description: '原始数据已复制到剪贴板' });
+        setTimeout(() => setCopiedRaw(false), 2000);
+      } else {
+        setCopiedNs(text);
+        toast({ description: '已复制到剪贴板' });
+        setTimeout(() => setCopiedNs(null), 2000);
+      }
     } catch {
       toast({ description: '复制失败', variant: 'destructive' });
     }
+  };
+
+  const getRegistrarUrl = (registrar: string): string | null => {
+    if (!registrar || registrar === 'N/A' || registrar === 'Unknown') return null;
+    
+    const registrarLower = registrar.toLowerCase().trim();
+    
+    // 直接匹配
+    if (REGISTRAR_URLS[registrarLower]) {
+      return REGISTRAR_URLS[registrarLower];
+    }
+    
+    // 部分匹配
+    for (const [key, url] of Object.entries(REGISTRAR_URLS)) {
+      if (registrarLower.includes(key) || key.includes(registrarLower)) {
+        return url;
+      }
+    }
+    
+    return null;
   };
 
   const parseDate = (dateStr: string): Date | null => {
@@ -215,6 +315,12 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   const registrationTag = getRegistrationTag();
   const updateTag = getUpdateTag();
   const expirationTag = getExpirationTag();
+  const registrarUrl = getRegistrarUrl(data.registrar);
+
+  // 格式化原始数据用于复制
+  const getRawDataString = () => {
+    return JSON.stringify(rawData || data, null, 2);
+  };
 
   return (
     <Card className="border">
@@ -234,7 +340,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                   域名信息
                 </h3>
                 <div className="flex items-center gap-2">
-                  <TabsList className="bg-transparent p-0 h-auto gap-1">
+                  <TabsList className="bg-muted p-1 h-auto gap-1">
                     <TabsTrigger 
                       value="overview" 
                       className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
@@ -256,7 +362,20 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
               <div className="space-y-2">
                 <div className="info-row">
                   <div className="info-row-label">注册商</div>
-                  <div className="info-row-value">{data.registrar || 'N/A'}</div>
+                  <div className="info-row-value flex items-center gap-2">
+                    <span>{data.registrar || 'N/A'}</span>
+                    {registrarUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(registrarUrl, '_blank')}
+                        className="h-6 px-2 text-xs"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        官网
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="info-row">
                   <div className="info-row-label">DNSSEC</div>
@@ -350,6 +469,41 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
           </TabsContent>
 
           <TabsContent value="raw" className="p-6 mt-0">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <Info className="h-4 w-4" />
+                原始WHOIS数据
+              </h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyToClipboard(getRawDataString(), 'raw')}
+                  className="h-8"
+                >
+                  {copiedRaw ? (
+                    <Check className="h-3 w-3 mr-1" />
+                  ) : (
+                    <Copy className="h-3 w-3 mr-1" />
+                  )}
+                  复制全部
+                </Button>
+                <TabsList className="bg-muted p-1 h-auto gap-1">
+                  <TabsTrigger 
+                    value="overview" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
+                  >
+                    概览
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="raw" 
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
+                  >
+                    原始数据
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            </div>
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[500px] font-mono break-all whitespace-pre-wrap">
               {JSON.stringify(rawData || data, null, 2)}
             </pre>
