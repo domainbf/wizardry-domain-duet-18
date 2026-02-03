@@ -1308,6 +1308,8 @@ function parseWhoisText(text: string, domain: string): any {
     /expire on:\s*(.+)/i,
   ];
   
+  // 更新日期模式 - 注意：某些注册局返回的"Last Modified"实际上是查询时间，需要特殊处理
+  // 例如 .bn 的 "Last Modified" 是查询时间而非域名更新时间
   const updateDatePatterns = [
     /updated date:\s*(.+)/i,
     /updated:\s*(.+)/i,
@@ -1316,7 +1318,8 @@ function parseWhoisText(text: string, domain: string): any {
     /last updated on:\s*(.+)/i,
     /last update:\s*(.+)/i,
     /last modification:\s*(.+)/i,
-    /last modified:\s*(.+)/i,
+    // 排除 "Last Modified" - 某些注册局（如.bn）用它表示查询时间
+    // /last modified:\s*(.+)/i,  // 暂时禁用，避免误解析为更新时间
     /last modified on:\s*(.+)/i,
     /modification date:\s*(.+)/i,
     /modified:\s*(.+)/i,
