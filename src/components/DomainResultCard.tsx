@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info, Shield, Server, Copy, Check, ExternalLink } from 'lucide-react';
+import { Info, Shield, Server, Copy, Check, ExternalLink, User, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface WhoisData {
@@ -18,6 +18,9 @@ interface WhoisData {
     organization?: string;
     country?: string;
     email?: string;
+    phone?: string;
+    state?: string;
+    city?: string;
   };
   dnssec: boolean;
   lastUpdated: string;
@@ -89,11 +92,16 @@ const REGISTRAR_URLS: Record<string, string> = {
   'google': 'https://domains.google',
   'google llc': 'https://domains.google',
   'google domains': 'https://domains.google',
+  'squarespace': 'https://domains.squarespace.com',
+  'squarespace domains': 'https://domains.squarespace.com',
+  'squarespace domains llc': 'https://domains.squarespace.com',
+  'squarespace domains ii llc': 'https://domains.squarespace.com',
   'amazon': 'https://aws.amazon.com/route53',
   'amazon registrar': 'https://aws.amazon.com/route53',
   'amazon registrar, inc.': 'https://aws.amazon.com/route53',
   'dynadot': 'https://www.dynadot.com',
   'dynadot, llc': 'https://www.dynadot.com',
+  'dynadot llc': 'https://www.dynadot.com',
   'porkbun': 'https://www.porkbun.com',
   'porkbun llc': 'https://www.porkbun.com',
   'gandi': 'https://www.gandi.net',
@@ -101,52 +109,130 @@ const REGISTRAR_URLS: Record<string, string> = {
   'hover': 'https://www.hover.com',
   'tucows': 'https://www.tucows.com',
   'tucows domains': 'https://www.tucows.com',
+  'tucows domains inc.': 'https://www.tucows.com',
   'enom': 'https://www.enom.com',
   'enom, llc': 'https://www.enom.com',
+  'enom llc': 'https://www.enom.com',
   'name.com': 'https://www.name.com',
   'name.com, inc.': 'https://www.name.com',
   'register.com': 'https://www.register.com',
+  'register.com, inc.': 'https://www.register.com',
   'network solutions': 'https://www.networksolutions.com',
   'network solutions, llc': 'https://www.networksolutions.com',
   'markmonitor': 'https://www.markmonitor.com',
   'markmonitor inc.': 'https://www.markmonitor.com',
+  'markmonitor, inc.': 'https://www.markmonitor.com',
   'csc corporate domains': 'https://www.cscglobal.com',
+  'csc corporate domains, inc.': 'https://www.cscglobal.com',
   'key-systems': 'https://www.key-systems.net',
   'key-systems gmbh': 'https://www.key-systems.net',
   'ovh': 'https://www.ovh.com',
   'ovh sas': 'https://www.ovh.com',
   'ionos': 'https://www.ionos.com',
   '1&1 ionos': 'https://www.ionos.com',
+  '1&1 ionos se': 'https://www.ionos.com',
   'united-domains': 'https://www.united-domains.de',
+  'united-domains ag': 'https://www.united-domains.de',
   'epik': 'https://www.epik.com',
   'epik, inc.': 'https://www.epik.com',
+  'epik inc.': 'https://www.epik.com',
   'njalla': 'https://njal.la',
   'sav.com': 'https://www.sav.com',
+  'sav.com, llc': 'https://www.sav.com',
   'spaceship': 'https://www.spaceship.com',
+  'spaceship, inc.': 'https://www.spaceship.com',
+  'namesilo': 'https://www.namesilo.com',
+  'namesilo, llc': 'https://www.namesilo.com',
+  'hostinger': 'https://www.hostinger.com',
+  'hostinger operations': 'https://www.hostinger.com',
+  'rebel': 'https://www.rebel.com',
+  'rebel.com': 'https://www.rebel.com',
+  'inmotion hosting': 'https://www.inmotionhosting.com',
+  'bluehost': 'https://www.bluehost.com',
+  'dreamhost': 'https://www.dreamhost.com',
+  'hostgator': 'https://www.hostgator.com',
+  'siteground': 'https://www.siteground.com',
   // 中国注册商
   '阿里云': 'https://wanwang.aliyun.com',
   '万网': 'https://wanwang.aliyun.com',
   'alibaba': 'https://wanwang.aliyun.com',
   'alibaba cloud': 'https://wanwang.aliyun.com',
+  'alibaba cloud computing': 'https://wanwang.aliyun.com',
+  'alibaba cloud computing ltd.': 'https://wanwang.aliyun.com',
+  'alibaba cloud computing (beijing) co., ltd.': 'https://wanwang.aliyun.com',
   'hichina': 'https://wanwang.aliyun.com',
+  'hichina zhicheng': 'https://wanwang.aliyun.com',
   '腾讯云': 'https://dnspod.cloud.tencent.com',
+  'tencent cloud': 'https://dnspod.cloud.tencent.com',
   'dnspod': 'https://www.dnspod.cn',
   '新网': 'https://www.xinnet.com',
   'xinnet': 'https://www.xinnet.com',
+  'beijing xinnet': 'https://www.xinnet.com',
   '西部数码': 'https://www.west.cn',
   'west.cn': 'https://www.west.cn',
+  'chengdu west dimension': 'https://www.west.cn',
   '爱名网': 'https://www.22.cn',
   '22.cn': 'https://www.22.cn',
   '易名': 'https://www.ename.net',
   'ename': 'https://www.ename.net',
+  'ename technology': 'https://www.ename.net',
   '华为云': 'https://www.huaweicloud.com',
+  'huawei cloud': 'https://www.huaweicloud.com',
+  '聚名网': 'https://www.juming.com',
+  'juming': 'https://www.juming.com',
+  '美橙互联': 'https://www.cndns.com',
+  'cndns': 'https://www.cndns.com',
+  '中国万网': 'https://wanwang.aliyun.com',
+  '商务中国': 'https://www.bizcn.com',
+  'bizcn': 'https://www.bizcn.com',
   // 其他亚洲注册商
   'onamae': 'https://www.onamae.com',
+  'onamae.com': 'https://www.onamae.com',
   'gmo': 'https://www.gmo.jp',
+  'gmo internet': 'https://www.gmo.jp',
+  'gmo internet, inc.': 'https://www.gmo.jp',
+  'whois corp.': 'https://www.whois.co.kr',
+  'gabia': 'https://www.gabia.com',
+  'gabia, inc.': 'https://www.gabia.com',
   // 欧洲注册商
   'eurodns': 'https://www.eurodns.com',
+  'eurodns s.a.': 'https://www.eurodns.com',
   'strato': 'https://www.strato.de',
-  'hostinger': 'https://www.hostinger.com',
+  'strato ag': 'https://www.strato.de',
+  'netim': 'https://www.netim.com',
+  'netim sarl': 'https://www.netim.com',
+  'infomaniak': 'https://www.infomaniak.com',
+  'internetbs': 'https://internetbs.net',
+  'internet.bs': 'https://internetbs.net',
+  // 格鲁吉亚注册商
+  'cleannet.ge': 'https://www.cleannet.ge',
+  'cleannet.ge ltd': 'https://www.cleannet.ge',
+  'caucasus online': 'https://www.caucasus.net',
+  'proservice': 'https://www.proservice.ge',
+  // 俄罗斯注册商
+  'reg.ru': 'https://www.reg.ru',
+  'regru-ru': 'https://www.reg.ru',
+  'nic.ru': 'https://www.nic.ru',
+  'ru-center': 'https://www.nic.ru',
+  // 印度注册商
+  'bigrock': 'https://www.bigrock.in',
+  'resellerclub': 'https://www.resellerclub.com',
+  'publicdomainregistry': 'https://www.publicdomainregistry.com',
+  'pdr ltd': 'https://www.publicdomainregistry.com',
+  // 澳大利亚注册商
+  'crazy domains': 'https://www.crazydomains.com',
+  'ventraip': 'https://ventraip.com.au',
+  // 其他注册商
+  'domain.com': 'https://www.domain.com',
+  'domain.com, llc': 'https://www.domain.com',
+  '101domain': 'https://www.101domain.com',
+  '101domain, inc.': 'https://www.101domain.com',
+  'safenames': 'https://www.safenames.net',
+  'safenames ltd': 'https://www.safenames.net',
+  'encirca': 'https://www.encirca.com',
+  'encirca, inc.': 'https://www.encirca.com',
+  'webnic': 'https://www.webnic.cc',
+  'web commerce communications': 'https://www.webnic.cc',
 };
 
 interface DomainResultCardProps {
@@ -329,9 +415,35 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const registrationTag = getRegistrationTag();
-  const updateTag = getUpdateTag();
   const expirationTag = getExpirationTag();
   const registrarUrl = getRegistrarUrl(data.registrar);
+
+  // 检测更新时间是否实际上是查询时间
+  const isQueryTime = (): boolean => {
+    const updateDate = parseDate(data.lastUpdated);
+    if (!updateDate) return false;
+    
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - updateDate.getTime());
+    const hoursFromNow = diffTime / (1000 * 60 * 60);
+    
+    // 如果更新时间与当前时间相差不到24小时，认为是查询时间
+    return hoursFromNow < 24;
+  };
+  
+  const showAsQueryTime = isQueryTime();
+  const updateTag = showAsQueryTime ? null : getUpdateTag();
+
+  // 检查是否有注册人信息可显示
+  const hasRegistrantInfo = data.registrant && (
+    data.registrant.name || 
+    data.registrant.organization || 
+    data.registrant.country || 
+    data.registrant.email || 
+    data.registrant.phone ||
+    data.registrant.state ||
+    data.registrant.city
+  );
 
   // 格式化原始数据用于复制
   const getRawDataString = () => {
@@ -408,17 +520,20 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                     )}
                   </div>
                 </div>
-                <div className="info-row">
-                  <div className="info-row-label">更新时间</div>
-                  <div className="info-row-value flex items-center gap-2">
-                    <span>{formatDate(data.lastUpdated)}</span>
-                    {updateTag && (
-                      <Badge variant={updateTag.variant} className="text-xs">
-                        {updateTag.text}
-                      </Badge>
-                    )}
+                {/* 更新时间 - 仅在非查询时间时显示 */}
+                {!showAsQueryTime && data.lastUpdated && (
+                  <div className="info-row">
+                    <div className="info-row-label">更新时间</div>
+                    <div className="info-row-value flex items-center gap-2">
+                      <span>{formatDate(data.lastUpdated)}</span>
+                      {updateTag && (
+                        <Badge variant={updateTag.variant} className="text-xs">
+                          {updateTag.text}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="info-row">
                   <div className="info-row-label">过期时间</div>
                   <div className="info-row-value flex items-center gap-2">
@@ -430,8 +545,70 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                     )}
                   </div>
                 </div>
+                {/* 查询时间 - 在过期时间下方显示 */}
+                {showAsQueryTime && data.lastUpdated && (
+                  <div className="info-row">
+                    <div className="info-row-label flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      查询时间
+                    </div>
+                    <div className="info-row-value">
+                      <span>{formatDate(data.lastUpdated)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Registrant Info - 注册人信息 */}
+            {hasRegistrantInfo && (
+              <div>
+                <h3 className="section-title">
+                  <User className="h-4 w-4" />
+                  注册人信息
+                </h3>
+                <div className="space-y-2">
+                  {data.registrant?.name && (
+                    <div className="info-row">
+                      <div className="info-row-label">姓名</div>
+                      <div className="info-row-value">{data.registrant.name}</div>
+                    </div>
+                  )}
+                  {data.registrant?.organization && (
+                    <div className="info-row">
+                      <div className="info-row-label">组织</div>
+                      <div className="info-row-value">{data.registrant.organization}</div>
+                    </div>
+                  )}
+                  {data.registrant?.email && (
+                    <div className="info-row">
+                      <div className="info-row-label">邮箱</div>
+                      <div className="info-row-value">{data.registrant.email}</div>
+                    </div>
+                  )}
+                  {data.registrant?.phone && (
+                    <div className="info-row">
+                      <div className="info-row-label">电话</div>
+                      <div className="info-row-value">{data.registrant.phone}</div>
+                    </div>
+                  )}
+                  {(data.registrant?.city || data.registrant?.state) && (
+                    <div className="info-row">
+                      <div className="info-row-label">地区</div>
+                      <div className="info-row-value">
+                        {[data.registrant.city, data.registrant.state].filter(Boolean).join(', ')}
+                      </div>
+                    </div>
+                  )}
+                  {data.registrant?.country && (
+                    <div className="info-row">
+                      <div className="info-row-label">国家</div>
+                      <div className="info-row-value">{data.registrant.country}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Domain Status */}
             {data.status && data.status.length > 0 && (

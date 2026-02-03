@@ -1561,28 +1561,178 @@ function parseWhoisText(text: string, domain: string): any {
       }
     }
     
-    // 注册人信息
-    const registrantNameMatch = trimmed.match(/registrant(?:\s+name)?:\s*(.+)/i);
-    if (registrantNameMatch && registrantNameMatch[1]) {
-      const value = registrantNameMatch[1].trim();
-      if (value && value !== '-' && value.length > 1) {
-        result.registrant.name = value;
+    // 注册人信息 - 增强解析
+    // 姓名
+    const registrantNamePatterns = [
+      /registrant(?:\s+name)?:\s*(.+)/i,
+      /registrant contact name:\s*(.+)/i,
+      /holder(?:\s+name)?:\s*(.+)/i,
+      /owner(?:\s+name)?:\s*(.+)/i,
+      /domain holder:\s*(.+)/i,
+      /titulaire:\s*(.+)/i,              // 法语
+      /注册者:\s*(.+)/i,
+      /registrante:\s*(.+)/i,            // 意大利语
+      /登録者名:\s*(.+)/i,               // 日语
+    ];
+    if (!result.registrant.name) {
+      for (const pattern of registrantNamePatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim();
+          if (value && value !== '-' && value.length > 1 && !value.toLowerCase().includes('redacted') && !value.toLowerCase().includes('privacy')) {
+            result.registrant.name = value;
+            break;
+          }
+        }
       }
     }
     
-    const registrantOrgMatch = trimmed.match(/registrant\s+org(?:anization)?:\s*(.+)/i);
-    if (registrantOrgMatch && registrantOrgMatch[1]) {
-      const value = registrantOrgMatch[1].trim();
-      if (value && value !== '-') {
-        result.registrant.organization = value;
+    // 组织
+    const registrantOrgPatterns = [
+      /registrant\s+org(?:anization)?:\s*(.+)/i,
+      /registrant contact organization:\s*(.+)/i,
+      /holder organization:\s*(.+)/i,
+      /organization:\s*(.+)/i,
+      /org:\s*(.+)/i,
+      /organisation:\s*(.+)/i,           // 英式英语
+      /organización:\s*(.+)/i,           // 西班牙语
+      /组织:\s*(.+)/i,
+      /会社名:\s*(.+)/i,                 // 日语
+    ];
+    if (!result.registrant.organization) {
+      for (const pattern of registrantOrgPatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim();
+          if (value && value !== '-' && value.length > 1 && !value.toLowerCase().includes('redacted') && !value.toLowerCase().includes('privacy')) {
+            result.registrant.organization = value;
+            break;
+          }
+        }
       }
     }
     
-    const registrantCountryMatch = trimmed.match(/registrant\s+country:\s*(.+)/i);
-    if (registrantCountryMatch && registrantCountryMatch[1]) {
-      const value = registrantCountryMatch[1].trim();
-      if (value && value !== '-') {
-        result.registrant.country = value;
+    // 国家
+    const registrantCountryPatterns = [
+      /registrant\s+country:\s*(.+)/i,
+      /registrant contact country:\s*(.+)/i,
+      /holder country:\s*(.+)/i,
+      /country:\s*(.+)/i,
+      /pays:\s*(.+)/i,                   // 法语
+      /país:\s*(.+)/i,                   // 西班牙语
+      /国家:\s*(.+)/i,
+    ];
+    if (!result.registrant.country) {
+      for (const pattern of registrantCountryPatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim().toUpperCase();
+          // 验证是2-3位国家代码或常见国家名
+          if (value && value !== '-' && (value.length === 2 || value.length === 3 || value.length > 3)) {
+            result.registrant.country = value;
+            break;
+          }
+        }
+      }
+    }
+    
+    // 邮箱
+    const registrantEmailPatterns = [
+      /registrant\s+email:\s*(.+)/i,
+      /registrant contact email:\s*(.+)/i,
+      /holder email:\s*(.+)/i,
+      /admin email:\s*(.+)/i,
+      /contact email:\s*(.+)/i,
+      /e-mail:\s*(.+)/i,
+      /email:\s*(.+)/i,
+      /邮箱:\s*(.+)/i,
+      /电子邮件:\s*(.+)/i,
+      /courriel:\s*(.+)/i,               // 法语
+    ];
+    if (!result.registrant.email) {
+      for (const pattern of registrantEmailPatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim().toLowerCase();
+          // 验证是有效邮箱格式且非隐私保护
+          if (value && value.includes('@') && !value.includes('redacted') && !value.includes('privacy') && !value.includes('whoisguard') && !value.includes('withheld')) {
+            result.registrant.email = value;
+            break;
+          }
+        }
+      }
+    }
+    
+    // 电话
+    const registrantPhonePatterns = [
+      /registrant\s+phone:\s*(.+)/i,
+      /registrant contact phone:\s*(.+)/i,
+      /holder phone:\s*(.+)/i,
+      /phone:\s*(.+)/i,
+      /tel:\s*(.+)/i,
+      /telephone:\s*(.+)/i,
+      /téléphone:\s*(.+)/i,              // 法语
+      /电话:\s*(.+)/i,
+      /联系电话:\s*(.+)/i,
+    ];
+    if (!result.registrant.phone) {
+      for (const pattern of registrantPhonePatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim();
+          // 验证是有效电话格式且非隐私保护
+          if (value && value !== '-' && !value.toLowerCase().includes('redacted') && !value.toLowerCase().includes('privacy') && (value.includes('+') || /\d{6,}/.test(value.replace(/\D/g, '')))) {
+            result.registrant.phone = value;
+            break;
+          }
+        }
+      }
+    }
+    
+    // 省/州
+    const registrantStatePatterns = [
+      /registrant\s+state(?:\/province)?:\s*(.+)/i,
+      /registrant contact state(?:\/province)?:\s*(.+)/i,
+      /holder state:\s*(.+)/i,
+      /state(?:\/province)?:\s*(.+)/i,
+      /province:\s*(.+)/i,
+      /région:\s*(.+)/i,                 // 法语
+      /省份:\s*(.+)/i,
+      /州:\s*(.+)/i,
+    ];
+    if (!result.registrant.state) {
+      for (const pattern of registrantStatePatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim();
+          if (value && value !== '-' && value.length > 1 && !value.toLowerCase().includes('redacted')) {
+            result.registrant.state = value;
+            break;
+          }
+        }
+      }
+    }
+    
+    // 城市
+    const registrantCityPatterns = [
+      /registrant\s+city:\s*(.+)/i,
+      /registrant contact city:\s*(.+)/i,
+      /holder city:\s*(.+)/i,
+      /city:\s*(.+)/i,
+      /ville:\s*(.+)/i,                  // 法语
+      /ciudad:\s*(.+)/i,                 // 西班牙语
+      /城市:\s*(.+)/i,
+    ];
+    if (!result.registrant.city) {
+      for (const pattern of registrantCityPatterns) {
+        const match = trimmed.match(pattern);
+        if (match && match[1]) {
+          const value = match[1].trim();
+          if (value && value !== '-' && value.length > 1 && !value.toLowerCase().includes('redacted')) {
+            result.registrant.city = value;
+            break;
+          }
+        }
       }
     }
   }
