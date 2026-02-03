@@ -6,6 +6,7 @@ interface PricingData {
   registerPrice: number;
   renewPrice: number;
   label: string;
+  priceError?: boolean;
 }
 
 interface PricingInfoProps {
@@ -26,6 +27,19 @@ const PricingInfo = ({ pricing, loading }: PricingInfoProps) => {
   }
 
   if (!pricing) return null;
+
+  // 价格查询失败或不支持此后缀时显示提示
+  if (pricing.priceError) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm py-2">
+        <span className="text-muted-foreground">价格: 不支持此后缀</span>
+        <span>
+          <span className="text-muted-foreground">标签:</span>{' '}
+          <span className="font-medium">{pricing.label}</span>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm py-2">

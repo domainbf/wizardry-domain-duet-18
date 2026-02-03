@@ -228,6 +228,12 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const getUpdateTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
+    // 先检查状态中是否有转移相关信息
+    const statusStr = data.status.join(' ').toLowerCase();
+    if (statusStr.includes('pending transfer') || statusStr.includes('pendingtransfer')) {
+      return { text: '转移中', variant: 'destructive' };
+    }
+    
     const updateDate = parseDate(data.lastUpdated);
     if (!updateDate) return null;
     
@@ -235,10 +241,20 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     const diffTime = now.getTime() - updateDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
-    // Check status for transfer-related info
-    const statusStr = data.status.join(' ').toLowerCase();
-    if (statusStr.includes('pending transfer') || statusStr.includes('pendingtransfer')) {
-      return { text: '转移中', variant: 'destructive' };
+    // 如果更新时间在今天或者非常接近（1天内），可能是查询时间而非实际更新时间
+    // 这种情况下不显示"刚刚续费"等误导性标签
+    if (diffDays <= 1) {
+      // 检查是否可能是查询时间（某些注册局返回查询时间作为Last Modified）
+      // 只有当更新时间明显早于到期时间时才显示标签
+      const expDate = parseDate(data.expirationDate);
+      const regDate = parseDate(data.registrationDate);
+      if (expDate && regDate) {
+        // 如果更新时间几乎等于当前时间，很可能是查询时间
+        const hoursFromNow = Math.abs(diffTime) / (1000 * 60 * 60);
+        if (hoursFromNow < 24) {
+          return null; // 不显示标签，避免误导
+        }
+      }
     }
     
     if (diffDays <= 7) {
