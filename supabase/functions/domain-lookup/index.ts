@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 // ==================== IDN / Punycode 支持 ====================
-// 简化的 Punycode 编码实现
 function punyEncode(input: string): string {
   const base = 36;
   const tMin = 1;
@@ -22,7 +21,6 @@ function punyEncode(input: string): string {
   let bias = initialBias;
   let output = '';
   
-  // 收集基本字符
   const basicChars: string[] = [];
   const nonBasicChars: number[] = [];
   
@@ -44,10 +42,9 @@ function punyEncode(input: string): string {
   }
   
   if (handledCount === inputLength) {
-    return output; // 全是ASCII，无需编码
+    return output;
   }
   
-  // 获取所有唯一的非基本码点并排序
   const allCodePoints = [...input].map(c => c.charCodeAt(0)).filter(cp => cp >= 128);
   const uniqueCodePoints = [...new Set(allCodePoints)].sort((a, b) => a - b);
   
@@ -63,7 +60,7 @@ function punyEncode(input: string): string {
   }
   
   function encodeDigit(d: number): string {
-    return String.fromCharCode(d + (d < 26 ? 97 : 22)); // a-z, 0-9
+    return String.fromCharCode(d + (d < 26 ? 97 : 22));
   }
   
   for (const m of uniqueCodePoints) {
@@ -97,13 +94,11 @@ function punyEncode(input: string): string {
   return output;
 }
 
-// 将域名转换为 Punycode（如果包含非ASCII字符）
 function toASCII(domain: string): string {
   const parts = domain.split('.');
   const result: string[] = [];
   
   for (const part of parts) {
-    // 检查是否包含非ASCII字符
     if (/[^\x00-\x7F]/.test(part)) {
       result.push('xn--' + punyEncode(part));
     } else {
@@ -114,12 +109,11 @@ function toASCII(domain: string): string {
   return result.join('.');
 }
 
-// 检测是否为 IDN 域名
 function isIDN(domain: string): boolean {
   return /[^\x00-\x7F]/.test(domain) || domain.includes('xn--');
 }
 
-// ==================== 完整的WHOIS服务器列表 ====================
+// ==================== 完整的WHOIS服务器列表（全球覆盖） ====================
 const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: string; encoding?: string }> = {
   // =============== 通用顶级域名 (gTLD) ===============
   'com': { server: 'whois.verisign-grs.com', port: 43 },
@@ -207,341 +201,14 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'global': { server: 'whois.nic.global', port: 43 },
   'international': { server: 'whois.nic.international', port: 43 },
   'plus': { server: 'whois.nic.plus', port: 43 },
-  'pro': { server: 'whois.registrypro.pro', port: 43 },
   'space': { server: 'whois.nic.space', port: 43 },
   'website': { server: 'whois.nic.website', port: 43 },
-  'academy': { server: 'whois.nic.academy', port: 43 },
-  'accountant': { server: 'whois.nic.accountant', port: 43 },
-  'accountants': { server: 'whois.nic.accountants', port: 43 },
-  'actor': { server: 'whois.nic.actor', port: 43 },
-  'adult': { server: 'whois.nic.adult', port: 43 },
-  'apartments': { server: 'whois.nic.apartments', port: 43 },
-  'auto': { server: 'whois.nic.auto', port: 43 },
-  'autos': { server: 'whois.nic.autos', port: 43 },
-  'baby': { server: 'whois.nic.baby', port: 43 },
-  'band': { server: 'whois.nic.band', port: 43 },
-  'bar': { server: 'whois.nic.bar', port: 43 },
-  'beer': { server: 'whois.nic.beer', port: 43 },
-  'best': { server: 'whois.nic.best', port: 43 },
-  'bet': { server: 'whois.nic.bet', port: 43 },
-  'bid': { server: 'whois.nic.bid', port: 43 },
-  'bike': { server: 'whois.nic.bike', port: 43 },
-  'bingo': { server: 'whois.nic.bingo', port: 43 },
-  'bio': { server: 'whois.nic.bio', port: 43 },
-  'black': { server: 'whois.nic.black', port: 43 },
-  'blue': { server: 'whois.nic.blue', port: 43 },
-  'bond': { server: 'whois.nic.bond', port: 43 },
-  'boutique': { server: 'whois.nic.boutique', port: 43 },
-  'broker': { server: 'whois.nic.broker', port: 43 },
-  'builders': { server: 'whois.nic.builders', port: 43 },
-  'business': { server: 'whois.nic.business', port: 43 },
-  'buzz': { server: 'whois.nic.buzz', port: 43 },
-  'cab': { server: 'whois.nic.cab', port: 43 },
-  'cafe': { server: 'whois.nic.cafe', port: 43 },
-  'cam': { server: 'whois.nic.cam', port: 43 },
-  'camera': { server: 'whois.nic.camera', port: 43 },
-  'camp': { server: 'whois.nic.camp', port: 43 },
-  'capital': { server: 'whois.nic.capital', port: 43 },
-  'car': { server: 'whois.nic.car', port: 43 },
-  'cards': { server: 'whois.nic.cards', port: 43 },
-  'care': { server: 'whois.nic.care', port: 43 },
-  'careers': { server: 'whois.nic.careers', port: 43 },
-  'cars': { server: 'whois.nic.cars', port: 43 },
-  'casa': { server: 'whois.nic.casa', port: 43 },
-  'cash': { server: 'whois.nic.cash', port: 43 },
-  'casino': { server: 'whois.nic.casino', port: 43 },
-  'catering': { server: 'whois.nic.catering', port: 43 },
-  'charity': { server: 'whois.nic.charity', port: 43 },
-  'chat': { server: 'whois.nic.chat', port: 43 },
-  'cheap': { server: 'whois.nic.cheap', port: 43 },
-  'christmas': { server: 'whois.nic.christmas', port: 43 },
-  'church': { server: 'whois.nic.church', port: 43 },
-  'claims': { server: 'whois.nic.claims', port: 43 },
-  'cleaning': { server: 'whois.nic.cleaning', port: 43 },
-  'clinic': { server: 'whois.nic.clinic', port: 43 },
-  'clothing': { server: 'whois.nic.clothing', port: 43 },
-  'coach': { server: 'whois.nic.coach', port: 43 },
-  'codes': { server: 'whois.nic.codes', port: 43 },
-  'coffee': { server: 'whois.nic.coffee', port: 43 },
-  'college': { server: 'whois.nic.college', port: 43 },
-  'community': { server: 'whois.nic.community', port: 43 },
-  'condos': { server: 'whois.nic.condos', port: 43 },
-  'construction': { server: 'whois.nic.construction', port: 43 },
-  'consulting': { server: 'whois.nic.consulting', port: 43 },
-  'contact': { server: 'whois.nic.contact', port: 43 },
-  'contractors': { server: 'whois.nic.contractors', port: 43 },
-  'cooking': { server: 'whois.nic.cooking', port: 43 },
-  'cool': { server: 'whois.nic.cool', port: 43 },
-  'country': { server: 'whois.nic.country', port: 43 },
-  'coupons': { server: 'whois.nic.coupons', port: 43 },
-  'courses': { server: 'whois.nic.courses', port: 43 },
-  'credit': { server: 'whois.nic.credit', port: 43 },
-  'cricket': { server: 'whois.nic.cricket', port: 43 },
-  'cruise': { server: 'whois.nic.cruise', port: 43 },
-  'cruises': { server: 'whois.nic.cruises', port: 43 },
-  'cyou': { server: 'whois.nic.cyou', port: 43 },
-  'dance': { server: 'whois.nic.dance', port: 43 },
-  'date': { server: 'whois.nic.date', port: 43 },
-  'dating': { server: 'whois.nic.dating', port: 43 },
-  'deals': { server: 'whois.nic.deals', port: 43 },
-  'degree': { server: 'whois.nic.degree', port: 43 },
-  'delivery': { server: 'whois.nic.delivery', port: 43 },
-  'democrat': { server: 'whois.nic.democrat', port: 43 },
-  'dental': { server: 'whois.nic.dental', port: 43 },
-  'dentist': { server: 'whois.nic.dentist', port: 43 },
-  'diamonds': { server: 'whois.nic.diamonds', port: 43 },
-  'diet': { server: 'whois.nic.diet', port: 43 },
-  'direct': { server: 'whois.nic.direct', port: 43 },
-  'directory': { server: 'whois.nic.directory', port: 43 },
-  'discount': { server: 'whois.nic.discount', port: 43 },
-  'doctor': { server: 'whois.nic.doctor', port: 43 },
-  'dog': { server: 'whois.nic.dog', port: 43 },
-  'domains': { server: 'whois.nic.domains', port: 43 },
-  'download': { server: 'whois.nic.download', port: 43 },
-  'earth': { server: 'whois.nic.earth', port: 43 },
-  'eco': { server: 'whois.nic.eco', port: 43 },
-  'education': { server: 'whois.nic.education', port: 43 },
-  'energy': { server: 'whois.nic.energy', port: 43 },
-  'engineer': { server: 'whois.nic.engineer', port: 43 },
-  'engineering': { server: 'whois.nic.engineering', port: 43 },
-  'enterprises': { server: 'whois.nic.enterprises', port: 43 },
-  'equipment': { server: 'whois.nic.equipment', port: 43 },
-  'estate': { server: 'whois.nic.estate', port: 43 },
-  'events': { server: 'whois.nic.events', port: 43 },
-  'exchange': { server: 'whois.nic.exchange', port: 43 },
-  'expert': { server: 'whois.nic.expert', port: 43 },
-  'exposed': { server: 'whois.nic.exposed', port: 43 },
-  'express': { server: 'whois.nic.express', port: 43 },
-  'fail': { server: 'whois.nic.fail', port: 43 },
-  'faith': { server: 'whois.nic.faith', port: 43 },
-  'family': { server: 'whois.nic.family', port: 43 },
-  'farm': { server: 'whois.nic.farm', port: 43 },
-  'fashion': { server: 'whois.nic.fashion', port: 43 },
-  'film': { server: 'whois.nic.film', port: 43 },
-  'finance': { server: 'whois.nic.finance', port: 43 },
-  'financial': { server: 'whois.nic.financial', port: 43 },
-  'fish': { server: 'whois.nic.fish', port: 43 },
-  'fishing': { server: 'whois.nic.fishing', port: 43 },
-  'fit': { server: 'whois.nic.fit', port: 43 },
-  'fitness': { server: 'whois.nic.fitness', port: 43 },
-  'flights': { server: 'whois.nic.flights', port: 43 },
-  'florist': { server: 'whois.nic.florist', port: 43 },
-  'flowers': { server: 'whois.nic.flowers', port: 43 },
-  'football': { server: 'whois.nic.football', port: 43 },
-  'forex': { server: 'whois.nic.forex', port: 43 },
-  'forsale': { server: 'whois.nic.forsale', port: 43 },
-  'foundation': { server: 'whois.nic.foundation', port: 43 },
-  'fund': { server: 'whois.nic.fund', port: 43 },
-  'furniture': { server: 'whois.nic.furniture', port: 43 },
-  'futbol': { server: 'whois.nic.futbol', port: 43 },
-  'fyi': { server: 'whois.nic.fyi', port: 43 },
-  'gallery': { server: 'whois.nic.gallery', port: 43 },
-  'garden': { server: 'whois.nic.garden', port: 43 },
-  'gay': { server: 'whois.nic.gay', port: 43 },
-  'gives': { server: 'whois.nic.gives', port: 43 },
-  'glass': { server: 'whois.nic.glass', port: 43 },
-  'gmbh': { server: 'whois.nic.gmbh', port: 43 },
-  'gold': { server: 'whois.nic.gold', port: 43 },
-  'golf': { server: 'whois.nic.golf', port: 43 },
-  'graphics': { server: 'whois.nic.graphics', port: 43 },
-  'gratis': { server: 'whois.nic.gratis', port: 43 },
-  'green': { server: 'whois.nic.green', port: 43 },
-  'gripe': { server: 'whois.nic.gripe', port: 43 },
-  'guide': { server: 'whois.nic.guide', port: 43 },
-  'guru': { server: 'whois.nic.guru', port: 43 },
-  'hair': { server: 'whois.nic.hair', port: 43 },
-  'haus': { server: 'whois.nic.haus', port: 43 },
-  'health': { server: 'whois.nic.health', port: 43 },
-  'healthcare': { server: 'whois.nic.healthcare', port: 43 },
-  'hockey': { server: 'whois.nic.hockey', port: 43 },
-  'holdings': { server: 'whois.nic.holdings', port: 43 },
-  'holiday': { server: 'whois.nic.holiday', port: 43 },
-  'home': { server: 'whois.nic.home', port: 43 },
-  'homes': { server: 'whois.nic.homes', port: 43 },
-  'horse': { server: 'whois.nic.horse', port: 43 },
-  'hospital': { server: 'whois.nic.hospital', port: 43 },
-  'host': { server: 'whois.nic.host', port: 43 },
-  'hosting': { server: 'whois.nic.hosting', port: 43 },
-  'house': { server: 'whois.nic.house', port: 43 },
-  'immo': { server: 'whois.nic.immo', port: 43 },
-  'immobilien': { server: 'whois.nic.immobilien', port: 43 },
-  'industries': { server: 'whois.nic.industries', port: 43 },
-  'ink': { server: 'whois.nic.ink', port: 43 },
-  'institute': { server: 'whois.nic.institute', port: 43 },
-  'insure': { server: 'whois.nic.insure', port: 43 },
-  'investments': { server: 'whois.nic.investments', port: 43 },
-  'irish': { server: 'whois.nic.irish', port: 43 },
-  'jetzt': { server: 'whois.nic.jetzt', port: 43 },
-  'jewelry': { server: 'whois.nic.jewelry', port: 43 },
-  'juegos': { server: 'whois.nic.juegos', port: 43 },
-  'kaufen': { server: 'whois.nic.kaufen', port: 43 },
-  'kim': { server: 'whois.nic.kim', port: 43 },
-  'kitchen': { server: 'whois.nic.kitchen', port: 43 },
-  'kiwi': { server: 'whois.nic.kiwi', port: 43 },
-  'land': { server: 'whois.nic.land', port: 43 },
-  'lat': { server: 'whois.nic.lat', port: 43 },
-  'lawyer': { server: 'whois.nic.lawyer', port: 43 },
-  'lease': { server: 'whois.nic.lease', port: 43 },
-  'legal': { server: 'whois.nic.legal', port: 43 },
-  'lgbt': { server: 'whois.nic.lgbt', port: 43 },
-  'lighting': { server: 'whois.nic.lighting', port: 43 },
-  'limited': { server: 'whois.nic.limited', port: 43 },
-  'limo': { server: 'whois.nic.limo', port: 43 },
-  'loan': { server: 'whois.nic.loan', port: 43 },
-  'loans': { server: 'whois.nic.loans', port: 43 },
-  'lotto': { server: 'whois.nic.lotto', port: 43 },
-  'love': { server: 'whois.nic.love', port: 43 },
-  'luxe': { server: 'whois.nic.luxe', port: 43 },
-  'luxury': { server: 'whois.nic.luxury', port: 43 },
-  'maison': { server: 'whois.nic.maison', port: 43 },
-  'makeup': { server: 'whois.nic.makeup', port: 43 },
-  'management': { server: 'whois.nic.management', port: 43 },
-  'market': { server: 'whois.nic.market', port: 43 },
-  'marketing': { server: 'whois.nic.marketing', port: 43 },
-  'markets': { server: 'whois.nic.markets', port: 43 },
-  'mba': { server: 'whois.nic.mba', port: 43 },
-  'memorial': { server: 'whois.nic.memorial', port: 43 },
-  'men': { server: 'whois.nic.men', port: 43 },
-  'menu': { server: 'whois.nic.menu', port: 43 },
-  'mobile': { server: 'whois.nic.mobile', port: 43 },
-  'moda': { server: 'whois.nic.moda', port: 43 },
-  'moe': { server: 'whois.nic.moe', port: 43 },
-  'money': { server: 'whois.nic.money', port: 43 },
-  'monster': { server: 'whois.nic.monster', port: 43 },
-  'mortgage': { server: 'whois.nic.mortgage', port: 43 },
-  'motorcycles': { server: 'whois.nic.motorcycles', port: 43 },
-  'movie': { server: 'whois.nic.movie', port: 43 },
-  'nagoya': { server: 'whois.nic.nagoya', port: 43 },
-  'navy': { server: 'whois.nic.navy', port: 43 },
-  'news': { server: 'whois.nic.news', port: 43 },
-  'ninja': { server: 'whois.nic.ninja', port: 43 },
-  'observer': { server: 'whois.nic.observer', port: 43 },
-  'one': { server: 'whois.nic.one', port: 43 },
-  'ooo': { server: 'whois.nic.ooo', port: 43 },
-  'osaka': { server: 'whois.nic.osaka', port: 43 },
-  'paris': { server: 'whois.nic.paris', port: 43 },
-  'partners': { server: 'whois.nic.partners', port: 43 },
-  'parts': { server: 'whois.nic.parts', port: 43 },
-  'party': { server: 'whois.nic.party', port: 43 },
-  'pet': { server: 'whois.nic.pet', port: 43 },
-  'photography': { server: 'whois.nic.photography', port: 43 },
-  'photos': { server: 'whois.nic.photos', port: 43 },
-  'physio': { server: 'whois.nic.physio', port: 43 },
-  'pictures': { server: 'whois.nic.pictures', port: 43 },
-  'pink': { server: 'whois.nic.pink', port: 43 },
-  'pizza': { server: 'whois.nic.pizza', port: 43 },
-  'place': { server: 'whois.nic.place', port: 43 },
-  'plumbing': { server: 'whois.nic.plumbing', port: 43 },
-  'poker': { server: 'whois.nic.poker', port: 43 },
-  'porn': { server: 'whois.nic.porn', port: 43 },
-  'press': { server: 'whois.nic.press', port: 43 },
-  'productions': { server: 'whois.nic.productions', port: 43 },
-  'promo': { server: 'whois.nic.promo', port: 43 },
-  'properties': { server: 'whois.nic.properties', port: 43 },
-  'property': { server: 'whois.nic.property', port: 43 },
-  'protection': { server: 'whois.nic.protection', port: 43 },
-  'pub': { server: 'whois.nic.pub', port: 43 },
-  'quest': { server: 'whois.nic.quest', port: 43 },
-  'racing': { server: 'whois.nic.racing', port: 43 },
-  'realestate': { server: 'whois.nic.realestate', port: 43 },
-  'realty': { server: 'whois.nic.realty', port: 43 },
-  'recipes': { server: 'whois.nic.recipes', port: 43 },
-  'red': { server: 'whois.nic.red', port: 43 },
-  'rehab': { server: 'whois.nic.rehab', port: 43 },
-  'reisen': { server: 'whois.nic.reisen', port: 43 },
-  'rent': { server: 'whois.nic.rent', port: 43 },
-  'rentals': { server: 'whois.nic.rentals', port: 43 },
-  'repair': { server: 'whois.nic.repair', port: 43 },
-  'report': { server: 'whois.nic.report', port: 43 },
-  'republican': { server: 'whois.nic.republican', port: 43 },
-  'rest': { server: 'whois.nic.rest', port: 43 },
-  'restaurant': { server: 'whois.nic.restaurant', port: 43 },
-  'review': { server: 'whois.nic.review', port: 43 },
-  'reviews': { server: 'whois.nic.reviews', port: 43 },
-  'rich': { server: 'whois.nic.rich', port: 43 },
-  'rip': { server: 'whois.nic.rip', port: 43 },
-  'rocks': { server: 'whois.nic.rocks', port: 43 },
-  'rodeo': { server: 'whois.nic.rodeo', port: 43 },
-  'run': { server: 'whois.nic.run', port: 43 },
-  'sale': { server: 'whois.nic.sale', port: 43 },
-  'salon': { server: 'whois.nic.salon', port: 43 },
-  'sarl': { server: 'whois.nic.sarl', port: 43 },
-  'school': { server: 'whois.nic.school', port: 43 },
-  'schule': { server: 'whois.nic.schule', port: 43 },
-  'science': { server: 'whois.nic.science', port: 43 },
-  'security': { server: 'whois.nic.security', port: 43 },
-  'services': { server: 'whois.nic.services', port: 43 },
-  'sex': { server: 'whois.nic.sex', port: 43 },
-  'sexy': { server: 'whois.nic.sexy', port: 43 },
-  'shiksha': { server: 'whois.nic.shiksha', port: 43 },
-  'shoes': { server: 'whois.nic.shoes', port: 43 },
-  'shopping': { server: 'whois.nic.shopping', port: 43 },
-  'show': { server: 'whois.nic.show', port: 43 },
-  'singles': { server: 'whois.nic.singles', port: 43 },
-  'ski': { server: 'whois.nic.ski', port: 43 },
-  'skin': { server: 'whois.nic.skin', port: 43 },
-  'soccer': { server: 'whois.nic.soccer', port: 43 },
-  'social': { server: 'whois.nic.social', port: 43 },
-  'software': { server: 'whois.nic.software', port: 43 },
-  'solar': { server: 'whois.nic.solar', port: 43 },
-  'spa': { server: 'whois.nic.spa', port: 43 },
-  'sport': { server: 'whois.nic.sport', port: 43 },
-  'spot': { server: 'whois.nic.spot', port: 43 },
-  'srl': { server: 'whois.nic.srl', port: 43 },
-  'storage': { server: 'whois.nic.storage', port: 43 },
-  'stream': { server: 'whois.nic.stream', port: 43 },
-  'style': { server: 'whois.nic.style', port: 43 },
-  'sucks': { server: 'whois.nic.sucks', port: 43 },
-  'supplies': { server: 'whois.nic.supplies', port: 43 },
-  'supply': { server: 'whois.nic.supply', port: 43 },
-  'support': { server: 'whois.nic.support', port: 43 },
-  'surf': { server: 'whois.nic.surf', port: 43 },
-  'surgery': { server: 'whois.nic.surgery', port: 43 },
-  'tattoo': { server: 'whois.nic.tattoo', port: 43 },
-  'tax': { server: 'whois.nic.tax', port: 43 },
-  'taxi': { server: 'whois.nic.taxi', port: 43 },
-  'team': { server: 'whois.nic.team', port: 43 },
-  'theater': { server: 'whois.nic.theater', port: 43 },
-  'theatre': { server: 'whois.nic.theatre', port: 43 },
-  'tienda': { server: 'whois.nic.tienda', port: 43 },
-  'tips': { server: 'whois.nic.tips', port: 43 },
-  'tires': { server: 'whois.nic.tires', port: 43 },
-  'tokyo': { server: 'whois.nic.tokyo', port: 43 },
-  'tools': { server: 'whois.nic.tools', port: 43 },
-  'tours': { server: 'whois.nic.tours', port: 43 },
-  'town': { server: 'whois.nic.town', port: 43 },
-  'toys': { server: 'whois.nic.toys', port: 43 },
-  'trade': { server: 'whois.nic.trade', port: 43 },
-  'trading': { server: 'whois.nic.trading', port: 43 },
-  'training': { server: 'whois.nic.training', port: 43 },
-  'tube': { server: 'whois.nic.tube', port: 43 },
-  'university': { server: 'whois.nic.university', port: 43 },
-  'uno': { server: 'whois.nic.uno', port: 43 },
-  'vacations': { server: 'whois.nic.vacations', port: 43 },
-  'vegas': { server: 'whois.nic.vegas', port: 43 },
-  'ventures': { server: 'whois.nic.ventures', port: 43 },
-  'vet': { server: 'whois.nic.vet', port: 43 },
-  'viajes': { server: 'whois.nic.viajes', port: 43 },
-  'video': { server: 'whois.nic.video', port: 43 },
-  'villas': { server: 'whois.nic.villas', port: 43 },
-  'vin': { server: 'whois.nic.vin', port: 43 },
-  'vision': { server: 'whois.nic.vision', port: 43 },
-  'vodka': { server: 'whois.nic.vodka', port: 43 },
-  'vote': { server: 'whois.nic.vote', port: 43 },
-  'voting': { server: 'whois.nic.voting', port: 43 },
-  'voto': { server: 'whois.nic.voto', port: 43 },
-  'voyage': { server: 'whois.nic.voyage', port: 43 },
-  'wales': { server: 'whois.nic.wales', port: 43 },
-  'watch': { server: 'whois.nic.watch', port: 43 },
-  'webcam': { server: 'whois.nic.webcam', port: 43 },
-  'wedding': { server: 'whois.nic.wedding', port: 43 },
-  'wiki': { server: 'whois.nic.wiki', port: 43 },
-  'win': { server: 'whois.nic.win', port: 43 },
-  'wine': { server: 'whois.nic.wine', port: 43 },
-  'works': { server: 'whois.nic.works', port: 43 },
-  'wtf': { server: 'whois.nic.wtf', port: 43 },
-  'yoga': { server: 'whois.nic.yoga', port: 43 },
-  'yokohama': { server: 'whois.nic.yokohama', port: 43 },
+  'io': { server: 'whois.nic.io', port: 43 },
+  'ai': { server: 'whois.nic.ai', port: 43 },
+  'cc': { server: 'ccwhois.verisign-grs.com', port: 43 },
+  'co': { server: 'whois.nic.co', port: 43 },
+  'me': { server: 'whois.nic.me', port: 43 },
+  'tv': { server: 'tvwhois.verisign-grs.com', port: 43 },
   
   // =============== 中文顶级域名 ===============
   '中国': { server: 'whois.cnnic.cn', port: 43, encoding: 'utf-8' },
@@ -567,7 +234,7 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   '台湾': { server: 'whois.twnic.net.tw', port: 43, encoding: 'utf-8' },
   '台灣': { server: 'whois.twnic.net.tw', port: 43, encoding: 'utf-8' },
   
-  // =============== 国家/地区顶级域名 (ccTLD) - 亚洲 ===============
+  // =============== 国家/地区顶级域名 (ccTLD) - 亚洲（完整） ===============
   'cn': { server: 'whois.cnnic.cn', port: 43 },
   'hk': { server: 'whois.hkirc.hk', port: 43 },
   'tw': { server: 'whois.twnic.net.tw', port: 43 },
@@ -588,8 +255,6 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'bd': { server: 'whois.btcl.net.bd', port: 43 },
   'np': { server: 'whois.mos.com.np', port: 43 },
   'lk': { server: 'whois.nic.lk', port: 43 },
-  'kz': { server: 'whois.nic.kz', port: 43 },
-  'uz': { server: 'whois.cctld.uz', port: 43 },
   'mn': { server: 'whois.nic.mn', port: 43 },
   'mm': { server: 'whois.nic.mm', port: 43 },
   'bn': { server: 'whois.bnnic.bn', port: 43 },
@@ -599,13 +264,7 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'mo': { server: 'whois.monic.mo', port: 43 },
   'tl': { server: 'whois.nic.tl', port: 43 },
   'mv': { server: 'whois.nic.mv', port: 43 },
-  'af': { server: 'whois.nic.af', port: 43 },
   'tm': { server: 'whois.nic.tm', port: 43 },
-  'tj': { server: 'whois.nic.tj', port: 43 },
-  'kg': { server: 'whois.kg', port: 43 },
-  'am': { server: 'whois.amnic.net', port: 43 },
-  'ge': { server: 'whois.nic.ge', port: 43 },
-  'az': { server: 'whois.az', port: 43 },
   'cy': { server: 'whois.nic.cy', port: 43 },
   'tr': { server: 'whois.nic.tr', port: 43 },
   'lb': { server: 'whois.lbdr.org.lb', port: 43 },
@@ -619,7 +278,18 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'ye': { server: 'whois.y.net.ye', port: 43 },
   'ps': { server: 'whois.pnina.ps', port: 43 },
   
-  // =============== 国家/地区顶级域名 (ccTLD) - 欧洲 ===============
+  // =============== 中亚/高加索/中东（冷门ccTLD完整） ===============
+  'af': { server: 'whois.nic.af', port: 43 },
+  'kz': { server: 'whois.nic.kz', port: 43 },
+  'uz': { server: 'whois.cctld.uz', port: 43 },
+  'tj': { server: 'whois.nic.tj', port: 43 },
+  'kg': { server: 'whois.kg', port: 43 },
+  'tm': { server: 'whois.nic.tm', port: 43 },
+  'am': { server: 'whois.amnic.net', port: 43 },
+  'ge': { server: 'whois.nic.ge', port: 43 },
+  'az': { server: 'whois.az', port: 43 },
+  
+  // =============== 国家/地区顶级域名 (ccTLD) - 欧洲（完整） ===============
   'uk': { server: 'whois.nic.uk', port: 43 },
   'de': { server: 'whois.denic.de', port: 43, query: '-T dn,ace ' },
   'fr': { server: 'whois.nic.fr', port: 43 },
@@ -661,7 +331,6 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'sm': { server: 'whois.nic.sm', port: 43 },
   'va': { server: 'whois.nic.va', port: 43 },
   'ba': { server: 'whois.nic.ba', port: 43 },
-  'me': { server: 'whois.nic.me', port: 43 },
   'mk': { server: 'whois.marnet.mk', port: 43 },
   'al': { server: 'whois.akep.al', port: 43 },
   'xk': { server: 'whois.nic.xk', port: 43 },
@@ -673,15 +342,15 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'gi': { server: 'whois.nic.gi', port: 43 },
   'su': { server: 'whois.tcinet.ru', port: 43 },
   'рф': { server: 'whois.tcinet.ru', port: 43, encoding: 'utf-8' },
+  'eu': { server: 'whois.eu', port: 43 },
   
-  // =============== 国家/地区顶级域名 (ccTLD) - 美洲 ===============
+  // =============== 国家/地区顶级域名 (ccTLD) - 美洲（完整） ===============
   'us': { server: 'whois.nic.us', port: 43 },
   'ca': { server: 'whois.cira.ca', port: 43 },
   'mx': { server: 'whois.mx', port: 43 },
   'br': { server: 'whois.registro.br', port: 43 },
   'ar': { server: 'whois.nic.ar', port: 43 },
   'cl': { server: 'whois.nic.cl', port: 43 },
-  'co': { server: 'whois.nic.co', port: 43 },
   'pe': { server: 'kero.yachay.pe', port: 43 },
   've': { server: 'whois.nic.ve', port: 43 },
   'ec': { server: 'whois.nic.ec', port: 43 },
@@ -702,7 +371,6 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'cw': { server: 'whois.nic.cw', port: 43 },
   'sx': { server: 'whois.sx', port: 43 },
   'bq': { server: 'whois.nic.bq', port: 43 },
-  'ai': { server: 'whois.nic.ai', port: 43 },
   'ag': { server: 'whois.nic.ag', port: 43 },
   'bb': { server: 'whois.telecoms.gov.bb', port: 43 },
   'bs': { server: 'whois.nic.bs', port: 43 },
@@ -729,13 +397,12 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'gf': { server: 'whois.mediaserv.net', port: 43 },
   'fk': { server: 'whois.nic.fk', port: 43 },
   
-  // =============== 国家/地区顶级域名 (ccTLD) - 大洋洲 ===============
+  // =============== 国家/地区顶级域名 (ccTLD) - 大洋洲（完整） ===============
   'au': { server: 'whois.auda.org.au', port: 43 },
   'nz': { server: 'whois.srs.net.nz', port: 43 },
   'fj': { server: 'whois.nic.fj', port: 43 },
   'ws': { server: 'whois.website.ws', port: 43 },
   'to': { server: 'whois.tonic.to', port: 43 },
-  'tv': { server: 'whois.nic.tv', port: 43 },
   'nu': { server: 'whois.iis.nu', port: 43 },
   'ck': { server: 'whois.ck-nic.org.ck', port: 43 },
   'ki': { server: 'whois.nic.ki', port: 43 },
@@ -747,78 +414,69 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'gu': { server: 'whois.nic.gu', port: 43 },
   'mp': { server: 'whois.nic.mp', port: 43 },
   'mh': { server: 'whois.nic.mh', port: 43 },
-  'nr': { server: 'whois.nic.nr', port: 43 },
-  'pn': { server: 'whois.nic.pn', port: 43 },
-  'nc': { server: 'whois.nc', port: 43 },
-  'pf': { server: 'whois.registry.pf', port: 43 },
+  'pf': { server: 'whois.nic.pf', port: 43 },
+  'nc': { server: 'whois.nic.nc', port: 43 },
   'wf': { server: 'whois.nic.wf', port: 43 },
-  'tf': { server: 'whois.nic.tf', port: 43 },
-  'nf': { server: 'whois.nic.nf', port: 43 },
-  'cx': { server: 'whois.nic.cx', port: 43 },
-  'cc': { server: 'whois.nic.cc', port: 43 },
-  'hm': { server: 'whois.registry.hm', port: 43 },
+  'nr': { server: 'whois.nic.nr', port: 43 },
+  'pg': { server: 'whois.nic.pg', port: 43 },
   
-  // =============== 国家/地区顶级域名 (ccTLD) - 非洲 ===============
+  // =============== 国家/地区顶级域名 (ccTLD) - 非洲（完整） ===============
   'za': { server: 'whois.registry.net.za', port: 43 },
+  'eg': { server: 'whois.egregistry.eg', port: 43 },
   'ng': { server: 'whois.nic.net.ng', port: 43 },
   'ke': { server: 'whois.kenic.or.ke', port: 43 },
-  'eg': { server: 'whois.ripe.net', port: 43 },
+  'tz': { server: 'whois.tznic.or.tz', port: 43 },
+  'ug': { server: 'whois.co.ug', port: 43 },
+  'gh': { server: 'whois.nic.gh', port: 43 },
   'ma': { server: 'whois.registre.ma', port: 43 },
   'tn': { server: 'whois.ati.tn', port: 43 },
-  'gh': { server: 'whois.nic.gh', port: 43 },
-  'ug': { server: 'whois.co.ug', port: 43 },
-  'tz': { server: 'whois.nic.tz', port: 43 },
-  'rw': { server: 'whois.ricta.org.rw', port: 43 },
-  'et': { server: 'whois.ethiotelecom.et', port: 43 },
-  'na': { server: 'whois.na-nic.com.na', port: 43 },
-  'bw': { server: 'whois.nic.net.bw', port: 43 },
-  'mw': { server: 'whois.nic.mw', port: 43 },
-  'zm': { server: 'whois.nic.zm', port: 43 },
-  'mu': { server: 'whois.nic.mu', port: 43 },
-  're': { server: 'whois.nic.re', port: 43 },
-  'mg': { server: 'whois.nic.mg', port: 43 },
-  'sc': { server: 'whois2.afilias-grs.net', port: 43 },
+  'dz': { server: 'whois.nic.dz', port: 43 },
+  'ly': { server: 'whois.nic.ly', port: 43 },
+  'sd': { server: 'whois.nic.sd', port: 43 },
+  'et': { server: 'whois.nic.et', port: 43 },
   'sn': { server: 'whois.nic.sn', port: 43 },
   'ci': { server: 'whois.nic.ci', port: 43 },
-  'cm': { server: 'whois.netcom.cm', port: 43 },
-  'bf': { server: 'whois.nic.bf', port: 43 },
-  'ml': { server: 'whois.nic.ml', port: 43 },
-  'tg': { server: 'whois.nic.tg', port: 43 },
-  'bj': { server: 'whois.nic.bj', port: 43 },
-  'ne': { server: 'whois.nic.ne', port: 43 },
-  'gn': { server: 'whois.nic.gn', port: 43 },
-  'lr': { server: 'whois.nic.lr', port: 43 },
-  'sl': { server: 'whois.nic.sl', port: 43 },
-  'gm': { server: 'whois.nic.gm', port: 43 },
-  'gw': { server: 'whois.nic.gw', port: 43 },
-  'cv': { server: 'whois.nic.cv', port: 43 },
-  'mr': { server: 'whois.nic.mr', port: 43 },
-  'st': { server: 'whois.nic.st', port: 43 },
-  'ao': { server: 'whois.nic.ao', port: 43 },
+  'cm': { server: 'whois.nic.cm', port: 43 },
   'cd': { server: 'whois.nic.cd', port: 43 },
-  'cg': { server: 'whois.nic.cg', port: 43 },
-  'ga': { server: 'whois.nic.ga', port: 43 },
-  'gq': { server: 'whois.nic.gq', port: 43 },
-  'td': { server: 'whois.nic.td', port: 43 },
-  'cf': { server: 'whois.nic.cf', port: 43 },
-  'bi': { server: 'whois1.nic.bi', port: 43 },
-  'dj': { server: 'whois.nic.dj', port: 43 },
-  'er': { server: 'whois.nic.er', port: 43 },
-  'so': { server: 'whois.nic.so', port: 43 },
-  'km': { server: 'whois.nic.km', port: 43 },
-  'yt': { server: 'whois.nic.yt', port: 43 },
+  'ao': { server: 'whois.nic.ao', port: 43 },
   'mz': { server: 'whois.nic.mz', port: 43 },
   'zw': { server: 'whois.nic.zw', port: 43 },
+  'zm': { server: 'whois.nic.zm', port: 43 },
+  'bw': { server: 'whois.nic.net.bw', port: 43 },
+  'na': { server: 'whois.na-nic.com.na', port: 43 },
   'sz': { server: 'whois.nic.sz', port: 43 },
   'ls': { server: 'whois.nic.ls', port: 43 },
-  'ly': { server: 'whois.nic.ly', port: 43 },
-  'dz': { server: 'whois.nic.dz', port: 43 },
-  'sd': { server: 'whois.nic.sd', port: 43 },
+  'rw': { server: 'whois.ricta.org.rw', port: 43 },
+  'bi': { server: 'whois.nic.bi', port: 43 },
+  'mg': { server: 'whois.nic.mg', port: 43 },
+  'mu': { server: 'whois.nic.mu', port: 43 },
+  're': { server: 'whois.nic.re', port: 43 },
+  'sc': { server: 'whois.nic.sc', port: 43 },
+  'km': { server: 'whois.nic.km', port: 43 },
+  'yt': { server: 'whois.nic.yt', port: 43 },
+  'so': { server: 'whois.nic.so', port: 43 },
+  'dj': { server: 'whois.nic.dj', port: 43 },
+  'er': { server: 'whois.nic.er', port: 43 },
   'ss': { server: 'whois.nic.ss', port: 43 },
-  'io': { server: 'whois.nic.io', port: 43 },
+  'mr': { server: 'whois.nic.mr', port: 43 },
+  'ml': { server: 'whois.nic.ml', port: 43 },
+  'bf': { server: 'whois.nic.bf', port: 43 },
+  'ne': { server: 'whois.nic.ne', port: 43 },
+  'td': { server: 'whois.nic.td', port: 43 },
+  'cf': { server: 'whois.nic.cf', port: 43 },
+  'ga': { server: 'whois.nic.ga', port: 43 },
+  'cg': { server: 'whois.nic.cg', port: 43 },
+  'gq': { server: 'whois.nic.gq', port: 43 },
+  'st': { server: 'whois.nic.st', port: 43 },
+  'cv': { server: 'whois.nic.cv', port: 43 },
+  'gw': { server: 'whois.nic.gw', port: 43 },
+  'gm': { server: 'whois.nic.gm', port: 43 },
+  'sl': { server: 'whois.nic.sl', port: 43 },
+  'lr': { server: 'whois.nic.lr', port: 43 },
+  'tg': { server: 'whois.nic.tg', port: 43 },
+  'bj': { server: 'whois.nic.bj', port: 43 },
   'sh': { server: 'whois.nic.sh', port: 43 },
   'ac': { server: 'whois.nic.ac', port: 43 },
-  'gs': { server: 'whois.nic.gs', port: 43 },
   
   // =============== 二级域名映射 ===============
   'co.uk': { server: 'whois.nic.uk', port: 43 },
@@ -843,67 +501,103 @@ const WHOIS_SERVERS: Record<string, { server: string; port: number; query?: stri
   'ne.jp': { server: 'whois.jprs.jp', port: 43, query: 'DOM ' },
   'or.jp': { server: 'whois.jprs.jp', port: 43, query: 'DOM ' },
   'ac.jp': { server: 'whois.jprs.jp', port: 43, query: 'DOM ' },
+  'go.jp': { server: 'whois.jprs.jp', port: 43, query: 'DOM ' },
+  'ed.jp': { server: 'whois.jprs.jp', port: 43, query: 'DOM ' },
+  'ad.jp': { server: 'whois.jprs.jp', port: 43, query: 'DOM ' },
   'co.kr': { server: 'whois.kr', port: 43 },
   'or.kr': { server: 'whois.kr', port: 43 },
   'ne.kr': { server: 'whois.kr', port: 43 },
+  'go.kr': { server: 'whois.kr', port: 43 },
+  'ac.kr': { server: 'whois.kr', port: 43 },
   'co.nz': { server: 'whois.srs.net.nz', port: 43 },
   'net.nz': { server: 'whois.srs.net.nz', port: 43 },
   'org.nz': { server: 'whois.srs.net.nz', port: 43 },
   'govt.nz': { server: 'whois.srs.net.nz', port: 43 },
+  'ac.nz': { server: 'whois.srs.net.nz', port: 43 },
   'co.za': { server: 'whois.registry.net.za', port: 43 },
   'org.za': { server: 'whois.registry.net.za', port: 43 },
   'net.za': { server: 'whois.registry.net.za', port: 43 },
+  'gov.za': { server: 'whois.registry.net.za', port: 43 },
+  'ac.za': { server: 'whois.registry.net.za', port: 43 },
   'com.br': { server: 'whois.registro.br', port: 43 },
   'net.br': { server: 'whois.registro.br', port: 43 },
   'org.br': { server: 'whois.registro.br', port: 43 },
+  'gov.br': { server: 'whois.registro.br', port: 43 },
+  'edu.br': { server: 'whois.registro.br', port: 43 },
   'com.mx': { server: 'whois.mx', port: 43 },
   'org.mx': { server: 'whois.mx', port: 43 },
   'gob.mx': { server: 'whois.mx', port: 43 },
+  'net.mx': { server: 'whois.mx', port: 43 },
+  'edu.mx': { server: 'whois.mx', port: 43 },
   'com.ar': { server: 'whois.nic.ar', port: 43 },
   'org.ar': { server: 'whois.nic.ar', port: 43 },
   'gob.ar': { server: 'whois.nic.ar', port: 43 },
+  'net.ar': { server: 'whois.nic.ar', port: 43 },
+  'edu.ar': { server: 'whois.nic.ar', port: 43 },
 };
 
-// RDAP服务器列表
+// ==================== RDAP服务器列表 ====================
 const RDAP_SERVERS: Record<string, string> = {
   'com': 'https://rdap.verisign.com/com/v1',
   'net': 'https://rdap.verisign.com/net/v1',
-  'org': 'https://rdap.publicinterestregistry.org',
-  'info': 'https://rdap.afilias.net/rdap/afilias',
-  'biz': 'https://rdap.afilias.net/rdap/afilias',
-  'us': 'https://rdap.nic.us',
-  'uk': 'https://rdap.nominet.uk',
-  'de': 'https://rdap.denic.de',
-  'fr': 'https://rdap.nic.fr',
-  'it': 'https://rdap.nic.it',
-  'be': 'https://rdap.dns.be',
-  'ch': 'https://rdap.nic.ch',
-  'at': 'https://rdap.nic.at',
-  'es': 'https://rdap.nic.es',
-  'au': 'https://rdap.nic.au',
-  'ca': 'https://rdap.ca',
-  'jp': 'https://rdap.jprs.jp',
-  'cc': 'https://rdap.nic.cc',
-  'tv': 'https://rdap.nic.tv',
+  'org': 'https://rdap.publicinterestregistry.org/rdap',
+  'info': 'https://rdap.afilias.net/rdap/info',
+  'biz': 'https://rdap.nic.biz',
+  'name': 'https://rdap.nic.name',
+  'mobi': 'https://rdap.afilias.net/rdap/mobi',
+  'asia': 'https://rdap.nic.asia',
+  'cc': 'https://rdap.verisign.com/cc/v1',
+  'tv': 'https://rdap.verisign.com/tv/v1',
+  'io': 'https://rdap.nic.io',
   'me': 'https://rdap.nic.me',
   'co': 'https://rdap.nic.co',
-  'io': 'https://rdap.nic.io',
-  'af': 'https://rdap.nic.af',
-  'ke': 'https://rdap.kenic.or.ke',
+  'ai': 'https://rdap.nic.ai',
+  'de': 'https://rdap.denic.de',
+  'eu': 'https://rdap.eu',
+  'uk': 'https://rdap.nominet.uk/uk',
+  'nl': 'https://rdap.domain-registry.nl',
+  'be': 'https://rdap.dns.be',
+  'fr': 'https://rdap.nic.fr',
+  'ch': 'https://rdap.nic.ch',
+  'at': 'https://rdap.nic.at',
+  'pl': 'https://rdap.dns.pl',
+  'cz': 'https://rdap.nic.cz',
+  'se': 'https://rdap.iis.se',
+  'no': 'https://rdap.norid.no',
+  'dk': 'https://rdap.dk-hostmaster.dk',
+  'fi': 'https://rdap.fi',
+  'nz': 'https://rdap.srs.net.nz',
+  'au': 'https://rdap.auda.org.au',
+  'jp': 'https://rdap.jprs.jp/rdap',
+  'kr': 'https://rdap.kr',
+  'ru': 'https://rdap.tcinet.ru',
+  'br': 'https://rdap.registro.br',
+  'mx': 'https://rdap.mx',
+  'ar': 'https://rdap.nic.ar',
+  'cl': 'https://rdap.nic.cl',
+  'cn': 'https://rdap.cnnic.cn',
+  'hk': 'https://rdap.hkirc.hk',
+  'tw': 'https://rdap.twnic.net.tw',
+  'sg': 'https://rdap.sgnic.sg',
+  'my': 'https://rdap.mynic.my',
+  'th': 'https://rdap.thnic.co.th',
+  'in': 'https://rdap.registry.in',
   'app': 'https://rdap.nic.google',
   'dev': 'https://rdap.nic.google',
   'page': 'https://rdap.nic.google',
-  'xyz': 'https://rdap.nic.xyz',
-  'top': 'https://rdap.nic.top',
-  'club': 'https://rdap.nic.club',
+  'blog': 'https://rdap.nic.blog',
+  'cloud': 'https://rdap.nic.cloud',
   'online': 'https://rdap.centralnic.com/online',
   'site': 'https://rdap.centralnic.com/site',
+  'xyz': 'https://rdap.centralnic.com/xyz',
+  'top': 'https://rdap.nic.top',
+  'club': 'https://rdap.nic.club',
   'tech': 'https://rdap.centralnic.com/tech',
   'store': 'https://rdap.centralnic.com/store',
   'fun': 'https://rdap.centralnic.com/fun',
   'icu': 'https://rdap.centralnic.com/icu',
   'vip': 'https://rdap.centralnic.com/vip',
-  'shop': 'https://rdap.centralnic.com/shop',
+  'shop': 'https://rdap.nic.shop',
   'ltd': 'https://rdap.donuts.co/rdap/',
   'life': 'https://rdap.donuts.co/rdap/',
   'live': 'https://rdap.donuts.co/rdap/',
@@ -917,13 +611,11 @@ function getTLD(domain: string): string {
     const tld = parts[parts.length - 1];
     const sld = parts[parts.length - 2];
     
-    // 检查是否有二级域名的WHOIS服务器
     const potentialSecondLevel = `${sld}.${tld}`;
     if (WHOIS_SERVERS[potentialSecondLevel]) {
       return potentialSecondLevel;
     }
     
-    // 处理常见的二级域名
     if (tld === 'uk' && ['co', 'org', 'net', 'ac', 'gov'].includes(sld)) {
       return `${sld}.${tld}`;
     }
@@ -960,7 +652,7 @@ function getTLD(domain: string): string {
   return '';
 }
 
-// 直接TCP连接WHOIS服务器查询（优化超时）
+// 直接TCP连接WHOIS服务器查询
 async function queryWhoisDirect(domain: string, timeout: number = 10000): Promise<string> {
   const tld = getTLD(domain);
   const serverInfo = WHOIS_SERVERS[tld];
@@ -972,7 +664,6 @@ async function queryWhoisDirect(domain: string, timeout: number = 10000): Promis
   console.log(`Connecting to WHOIS server: ${serverInfo.server}:${serverInfo.port} for ${domain}`);
   
   try {
-    // 使用Deno的TCP连接（带连接超时）
     const connectPromise = Deno.connect({
       hostname: serverInfo.server,
       port: serverInfo.port,
@@ -984,29 +675,24 @@ async function queryWhoisDirect(domain: string, timeout: number = 10000): Promis
     
     const conn = await Promise.race([connectPromise, connectTimeoutPromise]) as Deno.Conn;
     
-    // 处理 IDN 域名 - 转换为 Punycode
     let queryDomain = domain;
     if (isIDN(domain)) {
       queryDomain = toASCII(domain);
       console.log(`IDN domain converted: ${domain} -> ${queryDomain}`);
     }
     
-    // 构建查询字符串
     const queryPrefix = serverInfo.query || '';
     const queryString = `${queryPrefix}${queryDomain}\r\n`;
     
     console.log(`Sending WHOIS query: ${queryString.trim()}`);
     
-    // 发送查询
     const encoder = new TextEncoder();
     await conn.write(encoder.encode(queryString));
     
-    // 读取响应
     const decoder = new TextDecoder(serverInfo.encoding || 'utf-8');
     const chunks: Uint8Array[] = [];
-    const buffer = new Uint8Array(8192); // 增大缓冲区
+    const buffer = new Uint8Array(8192);
     
-    // 设置读取超时
     const readTimeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('WHOIS query timeout')), timeout);
     });
@@ -1025,7 +711,6 @@ async function queryWhoisDirect(domain: string, timeout: number = 10000): Promis
     
     await Promise.race([readPromise, readTimeoutPromise]);
     
-    // 合并所有chunks
     const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
     const result = new Uint8Array(totalLength);
     let offset = 0;
@@ -1053,7 +738,6 @@ async function queryRDAP(domain: string): Promise<any> {
     throw new Error(`RDAP not supported for .${tld} domains`);
   }
 
-  // 处理 IDN 域名
   let queryDomain = domain;
   if (isIDN(domain)) {
     queryDomain = toASCII(domain);
@@ -1087,7 +771,7 @@ async function queryRDAP(domain: string): Promise<any> {
     }
 
     const data = await response.json();
-    return parseRDAPResponse(data, domain); // 传入原始域名用于显示
+    return parseRDAPResponse(data, domain);
   } catch (error) {
     console.error(`RDAP query failed for ${domain}:`, error);
     throw error;
@@ -1133,7 +817,6 @@ function parseRDAPResponse(data: any, originalDomain?: string): any {
 
 // 增强的未注册域名检测关键词
 const NOT_FOUND_INDICATORS = [
-  // 英文通用
   'no match for domain', 'not found', 'no data found',
   'domain is not registered', 'available for registration', 
   'status: free', 'status: available', 'no entries found',
@@ -1143,17 +826,246 @@ const NOT_FOUND_INDICATORS = [
   'this domain name has not been registered', 'domain status: free',
   'the domain has not been registered', 'domain name not known',
   'no match', 'domain name is not registered', 'unregistered',
-  // 中文
   '该域名未注册', '域名未注册', '未注册', '可以注册',
   '没有找到匹配的记录', '无匹配记录', '域名不存在',
-  // 日文
   'no registered', 'ドメイン名は登録されていません',
-  // 其他
   'nothing to display', 'no information available',
   'domain available', 'is free', 'not registered',
 ];
 
-// 解析WHOIS文本响应（增强版）
+// ==================== 完整的域名状态码映射（全量覆盖） ====================
+const STATUS_CODE_MAP: Record<string, string> = {
+  // ============ ICANN通用核心状态码 ============
+  'ok': '正常',
+  'active': '正常',
+  'actif': '正常',
+  'activo': '正常',
+  'registered': '已注册',
+  'connect': '已连接',
+  'connected': '已连接',
+  
+  // Hold状态
+  'clienthold': '客户暂停',
+  'client hold': '客户暂停',
+  'serverhold': '注册商暂停',
+  'server hold': '注册商暂停',
+  'hold': '暂停',
+  'inactive': '未激活',
+  'suspended': '已暂停',
+  'suspendedbyregistrar': '注册商暂停',
+  'suspendedbyregistry': '注册局暂停',
+  
+  // Delete禁止
+  'clientdeleteprohibited': '禁止删除',
+  'client delete prohibited': '禁止删除',
+  'serverdeleteprohibited': '禁止删除',
+  'server delete prohibited': '禁止删除',
+  'deleteprohibited': '禁止删除',
+  
+  // Transfer禁止
+  'clienttransferprohibited': '禁止转移',
+  'client transfer prohibited': '禁止转移',
+  'servertransferprohibited': '禁止转移',
+  'server transfer prohibited': '禁止转移',
+  'transferprohibited': '禁止转移',
+  'registrarlock': '注册商锁定',
+  'registrylock': '注册局锁定',
+  'clientlock': '客户锁定',
+  'serverlock': '注册局锁定',
+  'locked': '已锁定',
+  
+  // Renew禁止
+  'clientrenewprohibited': '禁止续费',
+  'client renew prohibited': '禁止续费',
+  'serverrenewprohibited': '禁止续费',
+  'server renew prohibited': '禁止续费',
+  'renewprohibited': '禁止续费',
+  
+  // Update禁止
+  'clientupdateprohibited': '禁止修改',
+  'client update prohibited': '禁止修改',
+  'serverupdateprohibited': '禁止修改',
+  'server update prohibited': '禁止修改',
+  'updateprohibited': '禁止修改',
+  
+  // 续费/过期相关
+  'autorenewperiod': '自动续费期',
+  'auto renew period': '自动续费期',
+  'redemptionperiod': '赎回期',
+  'redemption period': '赎回期',
+  'pendingrestore': '待恢复',
+  'pending restore': '待恢复',
+  'pendingdelete': '待删除',
+  'pending delete': '待删除',
+  'graceperiod': '宽限期',
+  'grace period': '宽限期',
+  'addperiod': '注册宽限期',
+  'add period': '注册宽限期',
+  'renewperiod': '续费宽限期',
+  'renew period': '续费宽限期',
+  'transferperiod': '转移宽限期',
+  'transfer period': '转移宽限期',
+  'extendedrenewperiod': '延长续费期',
+  'extended renewal period': '延长续费期',
+  'autorenewfailed': '自动续费失败',
+  'renewfailed': '续费失败',
+  'expired': '已过期',
+  
+  // 转移相关
+  'pendingtransfer': '转移中',
+  'pending transfer': '转移中',
+  'transferapproved': '转移已批准',
+  'transfer approved': '转移已批准',
+  'transferrejected': '转移被拒绝',
+  'transfer rejected': '转移被拒绝',
+  'pendingauthorization': '待授权',
+  'pendingauthinfo': '待转移码',
+  
+  // 注册/验证相关
+  'pendingregistration': '注册中',
+  'pending registration': '注册中',
+  'pendingverification': '待验证',
+  'pending verification': '待验证',
+  'pendingrenewal': '续费中',
+  'pending renewal': '续费中',
+  'pendingupdate': '修改中',
+  'pending update': '修改中',
+  'pendingcreate': '创建中',
+  'pending create': '创建中',
+  'holdononregistration': '注册暂存',
+  'registrationpending': '注册审核中',
+  
+  // 争议/违规相关
+  'dispute': '争议中',
+  'udrppending': 'UDRP争议中',
+  'courtorder': '司法锁定',
+  'court order': '司法锁定',
+  'trademarklaim': '商标申诉中',
+  'trademarkvalidated': '商标已验证',
+  'abusiveregistration': '恶意注册',
+  'spamrelated': '垃圾邮件相关',
+  'phishingrelated': '钓鱼网站相关',
+  'malwarerelated': '恶意软件相关',
+  'copyrightinfringement': '版权侵权',
+  'revoked': '已吊销',
+  'cancelled': '已注销',
+  
+  // DNS相关
+  'dnshold': 'DNS锁定',
+  'dns hold': 'DNS锁定',
+  'dnserror': 'DNS配置错误',
+  'dnsok': 'DNS正常',
+  'nameserverhold': '域名服务器暂停',
+  'nameserverupdateprohibited': '禁止修改DNS',
+  'noresolve': '解析失效',
+  'resolveok': '解析正常',
+  
+  // 特殊状态
+  'parked': '停放中',
+  'premium': '溢价域名',
+  'reserved': '保留域名',
+  'reservedrenewal': '保留续费',
+  'updateapproved': '修改已批准',
+  'updaterejected': '修改被拒绝',
+  'pendingautorenew': '待自动续费',
+  
+  // 地区专属状态
+  'servertransferapproved': '转移已审核',
+  'clienttransferapproved': '客户确认转移',
+  'linkhold': '关联锁定',
+  'mianfeihold': '免费域名暂停',
+  'bizdeleteprohibited': '企业禁止删除',
+  'org-mandatory': '组织资质审核',
+  'georestricted': '地域限制',
+  'nonresident': '非本地居民',
+  'agentrequired': '代理审核中',
+  'individualhold': '个人注册锁定',
+  'corporatehold': '企业注册锁定',
+  'us-citizen': '美国公民审核',
+  'ca-resident': '加拿大居民审核',
+  'au-trademark': '澳大利亚商标审核',
+  'localagent': '本地代理审核',
+  'paymentpending': '付款待确认',
+  'registrypending': '注册局审核中',
+  
+  // 隐私保护
+  'hiddeninwhois': '隐私保护',
+  'privacy': '隐私保护',
+  'privacyprotected': '隐私保护',
+  'redacted': '信息隐藏',
+  'whoisprotect': 'WHOIS保护',
+  
+  // 多语言状态
+  'enregistré': '已注册',
+  'actif': '正常',
+  'valide': '有效',
+  'expiré': '已过期',
+  'suspendu': '已暂停',
+  'registrado': '已注册',
+  'ativo': '正常',
+  'expirado': '已过期',
+  'suspenso': '已暂停',
+  '有効': '有效',
+  '登録済み': '已注册',
+  '활성': '正常',
+  '등록됨': '已注册',
+  'зарегистрирован': '已注册',
+  'активен': '正常',
+};
+
+// 翻译域名状态
+function translateStatus(status: string): string {
+  const normalized = status.toLowerCase().replace(/[_\-\s]+/g, '').trim();
+  
+  // 首先尝试精确匹配
+  if (STATUS_CODE_MAP[normalized]) {
+    return STATUS_CODE_MAP[normalized];
+  }
+  
+  // 尝试原始格式匹配
+  const lowerStatus = status.toLowerCase().trim();
+  if (STATUS_CODE_MAP[lowerStatus]) {
+    return STATUS_CODE_MAP[lowerStatus];
+  }
+  
+  // 处理带URL的状态（如 clientTransferProhibited https://icann.org/epp#...）
+  const statusWithoutUrl = status.replace(/https?:\/\/[^\s]*/gi, '').trim();
+  const normalizedWithoutUrl = statusWithoutUrl.toLowerCase().replace(/[_\-\s]+/g, '');
+  if (STATUS_CODE_MAP[normalizedWithoutUrl]) {
+    return STATUS_CODE_MAP[normalizedWithoutUrl];
+  }
+  
+  // 模糊匹配关键词
+  const keywords: Record<string, string> = {
+    'prohibited': '禁止',
+    'hold': '暂停',
+    'lock': '锁定',
+    'pending': '待处理',
+    'transfer': '转移',
+    'delete': '删除',
+    'update': '修改',
+    'renew': '续费',
+    'active': '正常',
+    'ok': '正常',
+    'redemption': '赎回期',
+    'expired': '已过期',
+    'suspended': '已暂停',
+    'dispute': '争议中',
+    'reserved': '保留',
+    'premium': '溢价',
+  };
+  
+  for (const [key, value] of Object.entries(keywords)) {
+    if (normalized.includes(key)) {
+      return value;
+    }
+  }
+  
+  // 返回原始状态
+  return status;
+}
+
+// 解析WHOIS文本响应（增强版 - 支持更多格式）
 function parseWhoisText(text: string, domain: string): any {
   console.log(`Parsing WHOIS response for ${domain}, length: ${text.length}`);
   
@@ -1166,21 +1078,19 @@ function parseWhoisText(text: string, domain: string): any {
     nameServers: [],
     status: [],
     dnssec: false,
-    lastUpdated: formatDate(new Date().toISOString()),
+    lastUpdated: null,
     source: 'whois' as const,
     registrant: {},
-    rawWhois: text  // 保存原始数据用于前端显示
+    rawWhois: text
   };
   
   const textLower = text.toLowerCase();
   
-  // 首先检查是否有注册信息
   let hasRegistrarInfo = false;
   let hasValidDates = false;
   let hasNameServers = false;
   
-  // 增强的注册商识别正则（支持多种语言格式，按优先级排序）
-  // 高优先级模式（精确匹配 registrar）
+  // 注册商识别正则（高优先级）
   const registrarPrimaryPatterns = [
     /^registrar:\s*(.+)/i,
     /^sponsoring registrar:\s*(.+)/i,
@@ -1188,27 +1098,25 @@ function parseWhoisText(text: string, domain: string): any {
     /^registrar organization:\s*(.+)/i,
     /^注册商:\s*(.+)/i,
     /^域名注册商:\s*(.+)/i,
-    /^bureau d'enregistrement:\s*(.+)/i,  // 法语
-    /^registraire:\s*(.+)/i,               // 法语
-    /^registro:\s*(.+)/i,                  // 西班牙语/葡萄牙语
-    /^registrador:\s*(.+)/i,               // 西班牙语
-    /^レジストラ:\s*(.+)/i,                // 日语
-    /^등록대행자:\s*(.+)/i,                // 韩语
-    /^регистратор:\s*(.+)/i,              // 俄语
+    /^bureau d'enregistrement:\s*(.+)/i,
+    /^registraire:\s*(.+)/i,
+    /^registro:\s*(.+)/i,
+    /^registrador:\s*(.+)/i,
+    /^レジストラ:\s*(.+)/i,
+    /^등록대행자:\s*(.+)/i,
+    /^регистратор:\s*(.+)/i,
   ];
   
-  // 低优先级模式（可能匹配到其他信息，仅在高优先级失败时使用）
   const registrarSecondaryPatterns = [
     /^registrant name:\s*(.+)/i,
     /^holder:\s*(.+)/i,
     /^domain holder:\s*(.+)/i,
     /^owner:\s*(.+)/i,
-    /^titulaire:\s*(.+)/i,                 // 法语
-    /^registrante:\s*(.+)/i,               // 意大利语
-    /^登録者:\s*(.+)/i,                    // 日语
+    /^titulaire:\s*(.+)/i,
+    /^registrante:\s*(.+)/i,
+    /^登録者:\s*(.+)/i,
   ];
   
-  // 跳过的区块标记（这些区块内的数据不应作为主要域名信息）
   const skipBlockMarkers = ['[HOLDER]', '[ADMIN_C]', '[TECH_C]', '[BILLING_C]', '[ADMIN-C]', '[TECH-C]', '[BILLING-C]'];
   
   // 增强的日期识别正则（支持全球格式）
@@ -1235,26 +1143,26 @@ function parseWhoisText(text: string, domain: string): any {
     /注册日期:\s*(.+)/i,
     /创建日期:\s*(.+)/i,
     /creation:\s*(.+)/i,
-    /date de création:\s*(.+)/i,          // 法语
-    /créé le:\s*(.+)/i,                   // 法语
-    /fecha de creación:\s*(.+)/i,         // 西班牙语
-    /fecha de registro:\s*(.+)/i,         // 西班牙语
-    /data de criação:\s*(.+)/i,           // 葡萄牙语
-    /data de registro:\s*(.+)/i,          // 葡萄牙语
-    /登録年月日:\s*(.+)/i,                // 日语
-    /作成日:\s*(.+)/i,                    // 日语
-    /등록일:\s*(.+)/i,                    // 韩语
-    /дата регистрации:\s*(.+)/i,         // 俄语
+    /date de création:\s*(.+)/i,
+    /créé le:\s*(.+)/i,
+    /fecha de creación:\s*(.+)/i,
+    /fecha de registro:\s*(.+)/i,
+    /data de criação:\s*(.+)/i,
+    /data de registro:\s*(.+)/i,
+    /登録年月日:\s*(.+)/i,
+    /作成日:\s*(.+)/i,
+    /등록일:\s*(.+)/i,
+    /дата регистрации:\s*(.+)/i,
     /created-date:\s*(.+)/i,
     /first registered:\s*(.+)/i,
     /domain create:\s*(.+)/i,
     /anniversary date:\s*(.+)/i,
     /initial registration:\s*(.+)/i,
-    /domain registered:\s*(.+)/i,
-    // 更多特殊格式
     /nic-creation-date:\s*(.+)/i,
     /domain-created:\s*(.+)/i,
-    /created\.+:\s*(.+)/i,
+    // .om 和其他阿拉伯国家格式
+    /registration\s+date:\s*(.+)/i,
+    /reg[.\s]date:\s*(.+)/i,
   ];
   
   const expirationDatePatterns = [
@@ -1286,30 +1194,29 @@ function parseWhoisText(text: string, domain: string): any {
     /过期日期:\s*(.+)/i,
     /到期日期:\s*(.+)/i,
     /有效期至:\s*(.+)/i,
-    /date d'expiration:\s*(.+)/i,         // 法语
-    /expire le:\s*(.+)/i,                 // 法语
-    /fecha de expiración:\s*(.+)/i,       // 西班牙语
-    /fecha de vencimiento:\s*(.+)/i,      // 西班牙语
-    /data de expiração:\s*(.+)/i,         // 葡萄牙语
-    /data de validade:\s*(.+)/i,          // 葡萄牙语
-    /有効期限:\s*(.+)/i,                  // 日语
-    /満了日:\s*(.+)/i,                    // 日语
-    /만료일:\s*(.+)/i,                    // 韩语
-    /дата окончания:\s*(.+)/i,           // 俄语
+    /date d'expiration:\s*(.+)/i,
+    /expire le:\s*(.+)/i,
+    /fecha de expiración:\s*(.+)/i,
+    /fecha de vencimiento:\s*(.+)/i,
+    /data de expiração:\s*(.+)/i,
+    /data de validade:\s*(.+)/i,
+    /有効期限:\s*(.+)/i,
+    /満了日:\s*(.+)/i,
+    /만료일:\s*(.+)/i,
+    /дата окончания:\s*(.+)/i,
     /expired:\s*(.+)/i,
     /expiry:\s*(.+)/i,
     /due date:\s*(.+)/i,
-    // 更多特殊格式（包括.bn等）
     /nic-expiry-date:\s*(.+)/i,
     /domain-expiry:\s*(.+)/i,
-    /expiry\.+:\s*(.+)/i,
     /domain validity:\s*(.+)/i,
     /valid to:\s*(.+)/i,
     /expire on:\s*(.+)/i,
+    // .om 格式
+    /exp[.\s]date:\s*(.+)/i,
   ];
   
-  // 更新日期模式 - 注意：某些注册局返回的"Last Modified"实际上是查询时间，需要特殊处理
-  // 例如 .bn 的 "Last Modified" 是查询时间而非域名更新时间
+  // 更新日期模式（排除查询时间模式）
   const updateDatePatterns = [
     /updated date:\s*(.+)/i,
     /updated:\s*(.+)/i,
@@ -1318,8 +1225,6 @@ function parseWhoisText(text: string, domain: string): any {
     /last updated on:\s*(.+)/i,
     /last update:\s*(.+)/i,
     /last modification:\s*(.+)/i,
-    // 排除 "Last Modified" - 某些注册局（如.bn）用它表示查询时间
-    // /last modified:\s*(.+)/i,  // 暂时禁用，避免误解析为更新时间
     /last modified on:\s*(.+)/i,
     /modification date:\s*(.+)/i,
     /modified:\s*(.+)/i,
@@ -1332,12 +1237,12 @@ function parseWhoisText(text: string, domain: string): any {
     /更新时间:\s*(.+)/i,
     /更新日期:\s*(.+)/i,
     /最后更新:\s*(.+)/i,
-    /最終更新:\s*(.+)/i,                  // 日语
-    /date de modification:\s*(.+)/i,      // 法语
-    /dernière modification:\s*(.+)/i,     // 法语 (塞内加尔格式)
-    /fecha de actualización:\s*(.+)/i,    // 西班牙语
-    /data de atualização:\s*(.+)/i,       // 葡萄牙语
-    /дата обновления:\s*(.+)/i,          // 俄语
+    /最終更新:\s*(.+)/i,
+    /date de modification:\s*(.+)/i,
+    /dernière modification:\s*(.+)/i,
+    /fecha de actualización:\s*(.+)/i,
+    /data de atualização:\s*(.+)/i,
+    /дата обновления:\s*(.+)/i,
   ];
   
   const nameServerPatterns = [
@@ -1356,11 +1261,11 @@ function parseWhoisText(text: string, domain: string): any {
     /hostname:\s*(.+)/i,
     /域名服务器:\s*(.+)/i,
     /DNS服务器:\s*(.+)/i,
-    /serveur dns:\s*(.+)/i,               // 法语
-    /serveur de noms:\s*(.+)/i,           // 法语 (塞内加尔格式)
-    /servidor dns:\s*(.+)/i,              // 西班牙语/葡萄牙语
-    /ネームサーバ:\s*(.+)/i,              // 日语
-    /네임서버:\s*(.+)/i,                  // 韩语
+    /serveur dns:\s*(.+)/i,
+    /serveur de noms:\s*(.+)/i,
+    /servidor dns:\s*(.+)/i,
+    /ネームサーバ:\s*(.+)/i,
+    /네임서버:\s*(.+)/i,
   ];
   
   const statusPatterns = [
@@ -1372,45 +1277,45 @@ function parseWhoisText(text: string, domain: string): any {
     /epp status:\s*(.+)/i,
     /状态:\s*(.+)/i,
     /域名状态:\s*(.+)/i,
-    /statut:\s*(.+)/i,                    // 法语
-    /estado:\s*(.+)/i,                    // 西班牙语/葡萄牙语
-    /ステータス:\s*(.+)/i,                // 日语
-    /상태:\s*(.+)/i,                      // 韩语
+    /statut:\s*(.+)/i,
+    /estado:\s*(.+)/i,
+    /ステータス:\s*(.+)/i,
+    /상태:\s*(.+)/i,
+  ];
+  
+  // 全局字段标识
+  const globalFieldPatterns = [
+    /^domain name:/i, /^registrar:/i, /^creation date:/i, /^expiration date:/i,
+    /^name server:/i, /^domain status:/i, /^dnssec:/i, /^updated date:/i,
+    /^registry expiry date:/i, /^registered:/i, /^expires:/i, /^created:/i,
   ];
   
   let inSkipBlock = false;
   let primaryRegistrarFound = false;
   
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('%') || trimmed.startsWith('#') || trimmed.startsWith('>>>')) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // 处理Tab分隔的行（某些注册局如.bn使用Tab分隔）
+    const trimmed = line.replace(/\t+/g, ': ').trim();
+    
+    if (!trimmed || trimmed.startsWith('%') || trimmed.startsWith('#') || trimmed.startsWith('>') || trimmed.startsWith('>>>')) {
       continue;
     }
     
-    // 检测全局字段（这些字段不属于联系人区块，应始终解析）
-    const isGlobalField = trimmed.match(/^(serveur de noms|name\s*server|nameserver|nserver|dns|dnssec|statut|status)/i);
+    const isGlobalField = globalFieldPatterns.some(p => p.test(trimmed));
     
-    // 如果是全局字段，退出跳过模式
-    if (isGlobalField) {
-      inSkipBlock = false;
-    }
-    
-    // 检测并跳过联系人区块
-    if (skipBlockMarkers.some(marker => trimmed.toUpperCase().includes(marker))) {
+    if (skipBlockMarkers.some(marker => trimmed.includes(marker))) {
       inSkipBlock = true;
       continue;
     }
     
-    // 空行可能结束跳过状态
     if (!trimmed.includes(':') && inSkipBlock) {
-      // 保持跳过状态，直到遇到全局字段
       continue;
     }
     
-    // 在跳过区块内，只跳过注册商相关解析，但仍解析全局字段
     const skipRegistrarParsing = inSkipBlock && !isGlobalField;
     
-    // 注册商信息（高优先级）- 只在非跳过区块内解析
+    // 注册商信息（高优先级）
     if (!skipRegistrarParsing && !primaryRegistrarFound) {
       for (const pattern of registrarPrimaryPatterns) {
         const match = trimmed.match(pattern);
@@ -1426,7 +1331,7 @@ function parseWhoisText(text: string, domain: string): any {
       }
     }
     
-    // 注册商信息（低优先级，仅在未找到主要匹配时）- 只在非跳过区块内解析
+    // 注册商信息（低优先级）
     if (!skipRegistrarParsing && !hasRegistrarInfo) {
       for (const pattern of registrarSecondaryPatterns) {
         const match = trimmed.match(pattern);
@@ -1471,14 +1376,20 @@ function parseWhoisText(text: string, domain: string): any {
       }
     }
     
-    // 更新日期
-    for (const pattern of updateDatePatterns) {
-      const match = trimmed.match(pattern);
-      if (match && match[1]) {
-        const dateValue = match[1].trim();
-        if (dateValue && dateValue !== '-') {
-          result.lastUpdated = formatDate(dateValue);
-          break;
+    // 更新日期（排除"Last Modified"因为某些注册局用它表示查询时间）
+    if (!result.lastUpdated) {
+      // 跳过 "Last Modified" 模式，因为 .bn 等注册局用它表示查询时间
+      const isLastModified = /last modified:/i.test(trimmed);
+      if (!isLastModified) {
+        for (const pattern of updateDatePatterns) {
+          const match = trimmed.match(pattern);
+          if (match && match[1]) {
+            const dateValue = match[1].trim();
+            if (dateValue && dateValue !== '-') {
+              result.lastUpdated = formatDate(dateValue);
+              break;
+            }
+          }
         }
       }
     }
@@ -1487,7 +1398,6 @@ function parseWhoisText(text: string, domain: string): any {
     for (const pattern of nameServerPatterns) {
       const match = trimmed.match(pattern);
       if (match && match[1]) {
-        // 分割可能包含多个NS的值（如 "ns1.example.com, ns2.example.com"）
         const nsValues = match[1].trim().split(/[,;\s]+/);
         for (const nsRaw of nsValues) {
           const ns = nsRaw.toLowerCase().trim();
@@ -1508,14 +1418,13 @@ function parseWhoisText(text: string, domain: string): any {
       }
     }
     
-    // 额外的 NS 检测：检查独立的 FQDN 行（某些 WHOIS 格式）
+    // 额外的 NS 检测
     if (trimmed.match(/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/i) && 
         !trimmed.includes(':') && 
         !trimmed.includes(' ') &&
         trimmed.length > 5 &&
         trimmed.length < 100) {
       const potentialNs = trimmed.toLowerCase();
-      // 检查是否看起来像 NS（包含 ns, dns, name 等）
       if ((potentialNs.includes('ns') || 
            potentialNs.includes('dns') || 
            potentialNs.includes('name') ||
@@ -1531,10 +1440,8 @@ function parseWhoisText(text: string, domain: string): any {
       const match = trimmed.match(pattern);
       if (match && match[1]) {
         const statusText = match[1].trim();
-        // 分割多个状态
         const statuses = statusText.split(/[,;\s]+/).filter(s => s.length > 0);
         statuses.forEach(status => {
-          // 去掉URL后缀
           const cleanStatus = status.replace(/https?:\/\/[^\s]*/g, '').trim();
           if (cleanStatus && !result.status.includes(cleanStatus) && cleanStatus.length > 1) {
             result.status.push(cleanStatus);
@@ -1549,7 +1456,6 @@ function parseWhoisText(text: string, domain: string): any {
       const dnssecMatch = trimmed.match(/dnssec:\s*(.+)/i);
       if (dnssecMatch && dnssecMatch[1]) {
         const dnssecValue = dnssecMatch[1].trim().toLowerCase();
-        // 明确检查启用状态
         const enabledIndicators = ['signed', 'yes', 'enabled', 'active', '是', 'oui', 'signée'];
         const disabledIndicators = ['unsigned', 'no', 'disabled', 'inactive', '否', 'non', 'not signed'];
         
@@ -1562,17 +1468,16 @@ function parseWhoisText(text: string, domain: string): any {
     }
     
     // 注册人信息 - 增强解析
-    // 姓名
     const registrantNamePatterns = [
       /registrant(?:\s+name)?:\s*(.+)/i,
       /registrant contact name:\s*(.+)/i,
       /holder(?:\s+name)?:\s*(.+)/i,
       /owner(?:\s+name)?:\s*(.+)/i,
       /domain holder:\s*(.+)/i,
-      /titulaire:\s*(.+)/i,              // 法语
+      /titulaire:\s*(.+)/i,
       /注册者:\s*(.+)/i,
-      /registrante:\s*(.+)/i,            // 意大利语
-      /登録者名:\s*(.+)/i,               // 日语
+      /registrante:\s*(.+)/i,
+      /登録者名:\s*(.+)/i,
     ];
     if (!result.registrant.name) {
       for (const pattern of registrantNamePatterns) {
@@ -1594,10 +1499,10 @@ function parseWhoisText(text: string, domain: string): any {
       /holder organization:\s*(.+)/i,
       /organization:\s*(.+)/i,
       /org:\s*(.+)/i,
-      /organisation:\s*(.+)/i,           // 英式英语
-      /organización:\s*(.+)/i,           // 西班牙语
+      /organisation:\s*(.+)/i,
+      /organización:\s*(.+)/i,
       /组织:\s*(.+)/i,
-      /会社名:\s*(.+)/i,                 // 日语
+      /会社名:\s*(.+)/i,
     ];
     if (!result.registrant.organization) {
       for (const pattern of registrantOrgPatterns) {
@@ -1618,8 +1523,8 @@ function parseWhoisText(text: string, domain: string): any {
       /registrant contact country:\s*(.+)/i,
       /holder country:\s*(.+)/i,
       /country:\s*(.+)/i,
-      /pays:\s*(.+)/i,                   // 法语
-      /país:\s*(.+)/i,                   // 西班牙语
+      /pays:\s*(.+)/i,
+      /país:\s*(.+)/i,
       /国家:\s*(.+)/i,
     ];
     if (!result.registrant.country) {
@@ -1627,7 +1532,6 @@ function parseWhoisText(text: string, domain: string): any {
         const match = trimmed.match(pattern);
         if (match && match[1]) {
           const value = match[1].trim().toUpperCase();
-          // 验证是2-3位国家代码或常见国家名
           if (value && value !== '-' && (value.length === 2 || value.length === 3 || value.length > 3)) {
             result.registrant.country = value;
             break;
@@ -1647,14 +1551,13 @@ function parseWhoisText(text: string, domain: string): any {
       /email:\s*(.+)/i,
       /邮箱:\s*(.+)/i,
       /电子邮件:\s*(.+)/i,
-      /courriel:\s*(.+)/i,               // 法语
+      /courriel:\s*(.+)/i,
     ];
     if (!result.registrant.email) {
       for (const pattern of registrantEmailPatterns) {
         const match = trimmed.match(pattern);
         if (match && match[1]) {
           const value = match[1].trim().toLowerCase();
-          // 验证是有效邮箱格式且非隐私保护
           if (value && value.includes('@') && !value.includes('redacted') && !value.includes('privacy') && !value.includes('whoisguard') && !value.includes('withheld')) {
             result.registrant.email = value;
             break;
@@ -1671,7 +1574,7 @@ function parseWhoisText(text: string, domain: string): any {
       /phone:\s*(.+)/i,
       /tel:\s*(.+)/i,
       /telephone:\s*(.+)/i,
-      /téléphone:\s*(.+)/i,              // 法语
+      /téléphone:\s*(.+)/i,
       /电话:\s*(.+)/i,
       /联系电话:\s*(.+)/i,
     ];
@@ -1680,7 +1583,6 @@ function parseWhoisText(text: string, domain: string): any {
         const match = trimmed.match(pattern);
         if (match && match[1]) {
           const value = match[1].trim();
-          // 验证是有效电话格式且非隐私保护
           if (value && value !== '-' && !value.toLowerCase().includes('redacted') && !value.toLowerCase().includes('privacy') && (value.includes('+') || /\d{6,}/.test(value.replace(/\D/g, '')))) {
             result.registrant.phone = value;
             break;
@@ -1696,7 +1598,7 @@ function parseWhoisText(text: string, domain: string): any {
       /holder state:\s*(.+)/i,
       /state(?:\/province)?:\s*(.+)/i,
       /province:\s*(.+)/i,
-      /région:\s*(.+)/i,                 // 法语
+      /région:\s*(.+)/i,
       /省份:\s*(.+)/i,
       /州:\s*(.+)/i,
     ];
@@ -1719,8 +1621,8 @@ function parseWhoisText(text: string, domain: string): any {
       /registrant contact city:\s*(.+)/i,
       /holder city:\s*(.+)/i,
       /city:\s*(.+)/i,
-      /ville:\s*(.+)/i,                  // 法语
-      /ciudad:\s*(.+)/i,                 // 西班牙语
+      /ville:\s*(.+)/i,
+      /ciudad:\s*(.+)/i,
       /城市:\s*(.+)/i,
     ];
     if (!result.registrant.city) {
@@ -1736,6 +1638,9 @@ function parseWhoisText(text: string, domain: string): any {
       }
     }
   }
+  
+  // 翻译所有状态码
+  result.status = result.status.map((s: string) => translateStatus(s));
   
   // 只有在没有任何注册信息时才检查未注册标识
   if (!hasRegistrarInfo && !hasValidDates && !hasNameServers) {
@@ -1754,71 +1659,48 @@ function formatDate(dateStr: string): string {
   }
   
   try {
-    // 清理日期字符串
     let cleanDateStr = dateStr
-      .replace(/\s*\(.*?\)/g, '')  // 移除括号内容
-      .replace(/\s*UTC.*/i, '')     // 移除UTC后缀
-      .replace(/\s*GMT.*/i, '')     // 移除GMT后缀
-      .replace(/\s*\+\d{2}:\d{2}.*/, '') // 移除时区偏移 +08:00
-      // 注意：不要使用 [+-]\d{4} 因为会匹配到 -2024 这样的年份
-      .replace(/\s+[+-]\d{4}$/, '')     // 移除行尾时区偏移格式 +0800（仅在行尾）
-      .replace(/T/, ' ')            // T替换为空格
-      .replace(/Z$/, '')            // 移除Z后缀
-      .replace(/\s+/g, ' ')         // 规范化空格
+      .replace(/\s*\(.*?\)/g, '')
+      .replace(/\s*UTC.*/i, '')
+      .replace(/\s*GMT.*/i, '')
+      .replace(/\s*\+\d{2}:\d{2}.*/, '')
+      .replace(/\s+[+-]\d{4}$/, '')
+      .replace(/T/, ' ')
+      .replace(/Z$/, '')
+      .replace(/\s+/g, ' ')
       .trim();
     
-    // 扩展的月份名称映射（支持多语言）
     const monthMap: Record<string, number> = {
-      // 英文
       'jan': 1, 'january': 1, 'feb': 2, 'february': 2, 'mar': 3, 'march': 3,
       'apr': 4, 'april': 4, 'may': 5, 'jun': 6, 'june': 6,
       'jul': 7, 'july': 7, 'aug': 8, 'august': 8, 'sep': 9, 'september': 9,
       'oct': 10, 'october': 10, 'nov': 11, 'november': 11, 'dec': 12, 'december': 12,
-      // 法语
       'janvier': 1, 'février': 2, 'fevrier': 2, 'mars': 3, 'avril': 4, 'mai': 5,
       'juin': 6, 'juillet': 7, 'août': 8, 'aout': 8, 'septembre': 9, 'octobre': 10,
       'novembre': 11, 'décembre': 12, 'decembre': 12,
-      // 西班牙语
       'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
       'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12,
-      // 葡萄牙语
       'janeiro': 1, 'fevereiro': 2, 'março': 3, 'marco': 3, 'maio': 5, 'junho': 6,
       'julho': 7, 'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12,
-      // 德语
       'januar': 1, 'februar': 2, 'marz': 3, 'märz': 3, 'juni': 6, 'juli': 7,
       'oktober': 10, 'dezember': 12,
-      // 意大利语
       'gennaio': 1, 'febbraio': 2, 'aprile': 4, 'maggio': 5, 'giugno': 6,
       'luglio': 7, 'settembre': 9, 'ottobre': 10, 'dicembre': 12,
     };
     
-    // 尝试各种日期格式的正则匹配
-    // 注意：文本月份格式要优先，因为它们更精确
     const datePatterns = [
-      // 文本月份格式优先（如 "20-Mar-2024"），因为更精确
-      // 英文日期格式 "DD-Mon-YYYY" (如 .bn 域名格式) - 允许后面有时间
       { pattern: /(\d{1,2})-([a-zA-Z]{3,})-(\d{4})(?:\s|$|[T\s]\d)/i, order: 'dmy_text' },
-      // 英文日期格式 "DD Mon YYYY", "DD Month YYYY" - 允许后面有时间
       { pattern: /(\d{1,2})\s+([a-zA-Zéûàç]+)\s+(\d{4})(?:\s|$|[T\s]\d)/i, order: 'dmy_text' },
-      // 英文日期格式 "Mon DD, YYYY", "Month DD YYYY"
       { pattern: /([a-zA-Zéûàç]+)\s+(\d{1,2}),?\s+(\d{4})/i, order: 'mdy_text' },
-      // 英文日期格式 "YYYY-Mon-DD"
       { pattern: /(\d{4})-([a-zA-Z]{3,})-(\d{1,2})/i, order: 'ymd_text' },
-      // ISO格式 (YYYY-MM-DD, YYYY.MM.DD, YYYY/MM/DD) - 优先尝试
       { pattern: /(\d{4})-(\d{1,2})-(\d{1,2})/, order: 'ymd' },
       { pattern: /(\d{4})\.(\d{1,2})\.(\d{1,2})/, order: 'ymd' },
       { pattern: /(\d{4})\/(\d{1,2})\/(\d{1,2})/, order: 'ymd' },
-      // 紧凑格式 YYYYMMDD
       { pattern: /^(\d{4})(\d{2})(\d{2})$/, order: 'ymd' },
-      // 中文/日文格式
       { pattern: /(\d{4})年(\d{1,2})月(\d{1,2})日/, order: 'ymd' },
-      // 欧式格式 DD.MM.YYYY, DD/MM/YYYY (注意：可能与 MM/DD/YYYY 混淆)
       { pattern: /(\d{1,2})\.(\d{1,2})\.(\d{4})/, order: 'dmy' },
-      // 美式格式 MM/DD/YYYY (不太常见于 WHOIS)
       { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{4})/, order: 'mdy' },
-      // 纯数字格式 DD-MM-YYYY（欧式）
       { pattern: /(\d{1,2})-(\d{1,2})-(\d{4})/, order: 'dmy' },
-      // 纯数字格式尝试解析 DD/MM/YY 或 MM/DD/YY (假设2位年份)
       { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{2})$/, order: 'dmy_short' },
     ];
     
@@ -1867,39 +1749,37 @@ function formatDate(dateStr: string): string {
           case 'dmy_short': {
             day = match[1];
             month = match[2];
-            const shortYear = parseInt(match[3]);
-            year = String(shortYear > 50 ? 1900 + shortYear : 2000 + shortYear);
+            const shortYear = parseInt(match[3], 10);
+            year = String(shortYear >= 70 ? 1900 + shortYear : 2000 + shortYear);
             break;
           }
           default:
             continue;
         }
         
-        if (year && month && day) {
-          const y = parseInt(year);
-          const m = parseInt(month);
-          const d = parseInt(day);
-          
-          // 验证日期有效性
-          if (y >= 1990 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-            return `${year}年${String(m).padStart(2, '0')}月${String(d).padStart(2, '0')}日`;
-          }
+        const yearNum = parseInt(year, 10);
+        const monthNum = parseInt(month, 10);
+        const dayNum = parseInt(day, 10);
+        
+        if (yearNum >= 1980 && yearNum <= 2100 && 
+            monthNum >= 1 && monthNum <= 12 && 
+            dayNum >= 1 && dayNum <= 31) {
+          return `${yearNum}年${String(monthNum).padStart(2, '0')}月${String(dayNum).padStart(2, '0')}日`;
         }
       }
     }
     
-    // 尝试直接用 Date 解析
-    const date = new Date(cleanDateStr);
-    if (!isNaN(date.getTime())) {
-      const year = date.getFullYear();
-      if (year >= 1990 && year <= 2100) {
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}年${month}月${day}日`;
+    const isoDate = new Date(cleanDateStr);
+    if (!isNaN(isoDate.getTime())) {
+      const year = isoDate.getFullYear();
+      const month = isoDate.getMonth() + 1;
+      const day = isoDate.getDate();
+      
+      if (year >= 1980 && year <= 2100) {
+        return `${year}年${String(month).padStart(2, '0')}月${String(day).padStart(2, '0')}日`;
       }
     }
     
-    // 无法解析，返回原始字符串（如果看起来像日期）
     if (/\d{4}/.test(cleanDateStr)) {
       return cleanDateStr;
     }
@@ -1914,14 +1794,11 @@ function formatDate(dateStr: string): string {
 function checkNotRegistered(whoisText: string, domain: string): boolean {
   const textLower = whoisText.toLowerCase();
   
-  // 检查响应长度 - 太短通常表示未注册
   if (whoisText.length < 50) {
     return true;
   }
   
-  // 检查未注册关键词
   if (NOT_FOUND_INDICATORS.some(indicator => textLower.includes(indicator))) {
-    // 但要确认没有注册信息
     const hasRegistrarInfo = /registrar:|registrant:|creation date:|created:|name server:/i.test(whoisText);
     if (!hasRegistrarInfo) {
       return true;
@@ -1936,14 +1813,13 @@ async function performDualLookup(domain: string): Promise<any> {
   const results: any = {};
   const errors: string[] = [];
   
-  // 处理 IDN 域名
   const originalDomain = domain;
   const asciiDomain = isIDN(domain) ? toASCII(domain) : domain;
   const tld = getTLD(asciiDomain);
 
   console.log(`Starting lookup for ${originalDomain} (ASCII: ${asciiDomain}, TLD: ${tld})`);
 
-  // 1. 首先尝试RDAP查询（如果支持）
+  // 1. 首先尝试RDAP查询
   if (RDAP_SERVERS[tld]) {
     try {
       console.log(`Attempting RDAP query for ${asciiDomain}`);
@@ -1956,7 +1832,6 @@ async function performDualLookup(domain: string): Promise<any> {
       console.log(`RDAP failed for ${originalDomain}: ${error.message}`);
       errors.push(`RDAP: ${error.message}`);
       
-      // 如果RDAP返回域名未找到，直接返回
       if (error.message === 'domain_not_found') {
         return {
           error: `域名 ${originalDomain} 未注册，该域名可供注册使用`,
@@ -1975,7 +1850,6 @@ async function performDualLookup(domain: string): Promise<any> {
         console.log(`Attempting direct WHOIS query for ${asciiDomain}`);
         const whoisText = await queryWhoisDirect(originalDomain, 12000);
         
-        // 检查域名是否未注册
         if (checkNotRegistered(whoisText, originalDomain)) {
           return {
             error: `域名 ${originalDomain} 未注册，该域名可供注册使用`,
@@ -1991,7 +1865,6 @@ async function performDualLookup(domain: string): Promise<any> {
               results.primary = whoisResult;
               console.log(`WHOIS lookup successful for ${originalDomain}`);
             } else {
-              // 解析成功但没有有效数据
               return {
                 error: `域名 ${originalDomain} 未注册，该域名可供注册使用`,
                 errorType: 'domain_not_found'
@@ -2007,7 +1880,6 @@ async function performDualLookup(domain: string): Promise<any> {
             throw parseError;
           }
         } else {
-          // 响应太短
           return {
             error: `域名 ${originalDomain} 未注册，该域名可供注册使用`,
             errorType: 'domain_not_found'
@@ -2046,7 +1918,6 @@ async function performDualLookup(domain: string): Promise<any> {
       };
     }
     
-    // 提供更清晰的错误信息
     const errorDetails = errors.map(e => {
       const parts = e.split(': ');
       return parts.length > 1 ? parts[1] : e;
@@ -2082,11 +1953,8 @@ async function performDualLookup(domain: string): Promise<any> {
 
 // 验证域名格式（支持IDN）
 function isValidDomain(domain: string): boolean {
-  // ASCII域名验证
   const asciiPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
-  // IDN域名验证 - 允许Unicode字符
   const idnPattern = /^[\p{L}\p{N}][\p{L}\p{N}\-]{0,61}[\p{L}\p{N}]?\.[\p{L}]{2,}$/u;
-  // Punycode域名验证
   const punycodePattern = /^xn--[a-z0-9-]+\.[a-z]{2,}$/i;
   
   return asciiPattern.test(domain) || idnPattern.test(domain) || punycodePattern.test(domain);
