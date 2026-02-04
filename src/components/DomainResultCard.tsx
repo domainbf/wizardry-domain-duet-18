@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Info, Shield, Server, Copy, Check, ExternalLink, User, Clock, Lock, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+// 请将以下四张图片放入 public/assets 或相应路径，并替换实际文件名
+import rwLogo from '@/assets/x-rw.png';
+import fafLogo from '@/assets/faf.png';
+import bnLogo from '@/assets/nic-bn.png';
+import ldkrLogo from '@/assets/ldkr.png';
 
 interface WhoisData {
   domain: string;
@@ -261,19 +267,11 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
 
   const getRegistrarUrl = (registrar: string): string | null => {
     if (!registrar || registrar === 'N/A' || registrar === 'Unknown') return null;
-    
     const registrarLower = registrar.toLowerCase().trim();
-    
-    if (REGISTRAR_URLS[registrarLower]) {
-      return REGISTRAR_URLS[registrarLower];
-    }
-    
+    if (REGISTRAR_URLS[registrarLower]) return REGISTRAR_URLS[registrarLower];
     for (const [key, url] of Object.entries(REGISTRAR_URLS)) {
-      if (registrarLower.includes(key) || key.includes(registrarLower)) {
-        return url;
-      }
+      if (registrarLower.includes(key) || key.includes(registrarLower)) return url;
     }
-    
     return null;
   };
 
@@ -314,13 +312,11 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   const getRegistrationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
     const regDate = parseDate(data.registrationDate);
     if (!regDate) return null;
-    
     const now = new Date();
     const diffTime = now.getTime() - regDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const diffYears = Math.floor(diffDays / 365);
     const diffMonths = Math.floor((diffDays % 365) / 30);
-    
     if (diffDays <= 30) return { text: '新注册', variant: 'destructive' };
     if (diffDays <= 90) return { text: '3月内注册', variant: 'secondary' };
     if (diffDays <= 365) return { text: '1年内注册', variant: 'secondary' };
@@ -335,16 +331,12 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     if (statusStr.includes('pending transfer') || statusStr.includes('pendingtransfer')) {
       return { text: '转移中', variant: 'destructive' };
     }
-    
     const updateDate = parseDate(data.lastUpdated);
     if (!updateDate) return null;
-    
     const now = new Date();
     const diffTime = now.getTime() - updateDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
     if (diffDays <= 1) return null;
-    
     if (diffDays <= 7) {
       if (statusStr.includes('transfer')) return { text: '近期转移', variant: 'secondary' };
       return { text: '刚刚续费', variant: 'secondary' };
@@ -357,17 +349,14 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   const getExpirationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
     const expDate = parseDate(data.expirationDate);
     if (!expDate) return null;
-    
     const now = new Date();
     const diffTime = expDate.getTime() - now.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const diffHours = Math.floor(diffTime / (1000 * 60 * 60)) % 24;
-
     const statusStr = data.status.join(' ').toLowerCase();
     if (statusStr.includes('redemption')) return { text: '赎回期', variant: 'destructive' };
     if (statusStr.includes('pending delete') || statusStr.includes('pendingdelete')) return { text: '删除中', variant: 'destructive' };
     if (statusStr.includes('auto renew')) return { text: '自动续费期', variant: 'secondary' };
-    
     if (diffDays < 0) {
       const expiredDays = Math.abs(diffDays);
       if (expiredDays <= 30) return { text: `已过期${expiredDays}天`, variant: 'destructive' };
@@ -383,11 +372,20 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     return { text: `剩余${diffDays}天`, variant: 'outline' };
   };
 
+  const getExpirationBadgeClass = () => {
+    const expDate = parseDate(data.expirationDate);
+    if (!expDate) return '';
+    const now = new Date();
+    const diffDays = Math.floor((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return 'bg-red-100 text-red-800 border-red-200';
+    if (diffDays <= 7) return 'bg-orange-100 text-orange-800 border-orange-200';
+    if (diffDays <= 30) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    return 'bg-green-100 text-green-800 border-green-200';
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr || dateStr === 'N/A') return 'N/A';
-    if (dateStr.includes('年') && dateStr.includes('月')) {
-      return dateStr;
-    }
+    if (dateStr.includes('年') && dateStr.includes('月')) return dateStr;
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
@@ -422,7 +420,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   const registrationTag = getRegistrationTag();
   const expirationTag = getExpirationTag();
   const registrarUrl = getRegistrarUrl(data.registrar);
-
   const isQueryTime = (): boolean => {
     const updateDate = parseDate(data.lastUpdated);
     if (!updateDate) return false;
@@ -431,10 +428,8 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     const hoursFromNow = diffTime / (1000 * 60 * 60);
     return hoursFromNow < 2;
   };
-  
   const showAsQueryTime = isQueryTime();
   const updateTag = showAsQueryTime ? null : getUpdateTag();
-
   const hasRegistrantInfo = data.registrant && (
     data.registrant.name || 
     data.registrant.organization || 
@@ -444,17 +439,12 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     data.registrant.state ||
     data.registrant.city
   );
-
   const privacyProtected = isPrivacyProtected();
   const nsProvider = getNsProvider();
-
   const clientStatuses = data.status.filter(s => s.toLowerCase().includes('client'));
   const serverStatuses = data.status.filter(s => s.toLowerCase().includes('server'));
   const otherStatuses = data.status.filter(s => !s.toLowerCase().includes('client') && !s.toLowerCase().includes('server'));
-
-  const getRawDataString = () => {
-    return JSON.stringify(rawData || data, null, 2);
-  };
+  const getRawDataString = () => JSON.stringify(rawData || data, null, 2);
 
   return (
     <Card className="border">
@@ -473,16 +463,10 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                 </h3>
                 <div className="flex items-center gap-2">
                   <TabsList className="bg-muted p-1 h-auto gap-1">
-                    <TabsTrigger 
-                      value="overview" 
-                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
-                    >
+                    <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
                       标准
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="raw" 
-                      className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
-                    >
+                    <TabsTrigger value="raw" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
                       数据
                     </TabsTrigger>
                   </TabsList>
@@ -492,25 +476,12 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                 </div>
               </div>
               <div className="space-y-2">
-                {privacyProtected && (
-                  <div className="flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-green-600" />
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      WHOIS隐私保护已启用
-                    </Badge>
-                  </div>
-                )}
                 <div className="info-row">
                   <div className="info-row-label">注册商</div>
                   <div className="info-row-value flex items-center gap-2">
                     <span>{data.registrar || 'N/A'}</span>
                     {registrarUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(registrarUrl, '_blank')}
-                        className="h-6 px-2 text-xs"
-                      >
+                      <Button variant="outline" size="sm" onClick={() => window.open(registrarUrl, '_blank')} className="h-6 px-2 text-xs">
                         <ExternalLink className="h-3 w-3 mr-1" />
                         官网
                       </Button>
@@ -546,7 +517,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                   <div className="info-row-value flex items-center gap-2">
                     <span>{formatDate(data.expirationDate)}</span>
                     {expirationTag && (
-                      <Badge variant={expirationTag.variant} className="text-xs">
+                      <Badge variant={expirationTag.variant} className={`text-xs border ${getExpirationBadgeClass()}`}>
                         {expirationTag.text}
                       </Badge>
                     )}
@@ -666,6 +637,14 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                     {data.dnssec ? '已启用' : '未启用'}
                   </Badge>
                 </div>
+                {privacyProtected && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-green-600" />
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      WHOIS隐私保护已启用
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -698,11 +677,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                         onClick={() => copyToClipboard(ns)}
                         className="h-8 flex-shrink-0"
                       >
-                        {copiedNs === ns ? (
-                          <Check className="h-3 w-3" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
+                        {copiedNs === ns ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                         <span className="ml-1">复制</span>
                       </Button>
                     </div>
@@ -716,7 +691,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="flex items-center gap-2 text-sm font-semibold">
                 <Info className="h-4 w-4" />
-                可显示
+                原始数据
               </h3>
               <div className="flex items-center gap-2">
                 <Button
@@ -725,35 +700,37 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                   onClick={() => copyToClipboard(getRawDataString(), 'raw')}
                   className="h-8"
                 >
-                  {copiedRaw ? (
-                    <Check className="h-3 w-3 mr-1" />
-                  ) : (
-                    <Copy className="h-3 w-3 mr-1" />
-                  )}
+                  {copiedRaw ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
                   复制全部
                 </Button>
                 <TabsList className="bg-muted p-1 h-auto gap-1">
-                  <TabsTrigger 
-                    value="overview" 
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
-                  >
+                  <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
                     标准
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="raw" 
-                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
-                  >
+                  <TabsTrigger value="raw" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
                     数据
                   </TabsTrigger>
                 </TabsList>
               </div>
             </div>
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[500px] font-mono break-all whitespace-pre-wrap">
-              {JSON.stringify(rawData || data, null, 2)}
+              {getRawDataString()}
             </pre>
           </TabsContent>
         </Tabs>
       </CardContent>
+
+      <CardFooter className="flex flex-col items-center gap-4 py-4 border-t bg-muted/30">
+        <div className="flex items-center justify-center gap-8 flex-wrap">
+          <img src={rwLogo} alt=".RW" className="h-16 w-auto object-contain" />
+          <img src={fafLogo} alt="FAF" className="h-16 w-auto object-contain" />
+          <img src={bnLogo} alt="NIC.BN" className="h-16 w-auto object-contain" />
+          <img src={ldkrLogo} alt="LDKR" className="h-16 w-auto object-contain" />
+        </div>
+        <div className="text-xs text-muted-foreground">
+          © 2026 不讲·李. All rights reserved.
+        </div>
+      </CardFooter>
     </Card>
   );
 };
