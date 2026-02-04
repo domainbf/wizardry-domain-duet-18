@@ -32,7 +32,7 @@ const PricingInfo = ({ pricing, loading }: PricingInfoProps) => {
   if (pricing.priceError) {
     return (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm py-2">
-        <span className="text-muted-foreground">价格: 不支持此后缀</span>
+        <span className="text-muted-foreground">此域价格太高，不方便透露！</span>
         <span>
           <span className="text-muted-foreground">标签:</span>{' '}
           <span className="font-medium">{pricing.label}</span>
