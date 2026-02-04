@@ -505,10 +505,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                     )}
                   </div>
                 </div>
-                <div className="info-row">
-                  <div className="info-row-label">DNSSEC</div>
-                  <div className="info-row-value">{data.dnssec ? '已启用' : '未启用'}</div>
-                </div>
               <div className="info-row">
                   <div className="info-row-label">注册时间</div>
                   <div className="info-row-value flex items-center gap-2">
@@ -610,22 +606,33 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
               </div>
             )}
 
-            {/* Domain Status */}
-            {data.status && data.status.length > 0 && (
-              <div>
-                <h3 className="section-title">
-                  <Shield className="h-4 w-4" />
-                  域名状态
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {data.status.map((status, index) => (
+            {/* Domain Status & DNSSEC */}
+            <div>
+              <h3 className="section-title">
+                <Shield className="h-4 w-4" />
+                域名状态
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {data.status && data.status.length > 0 ? (
+                  data.status.map((status, index) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {getStatusChinese(status)}
                     </Badge>
-                  ))}
+                  ))
+                ) : (
+                  <Badge variant="secondary" className="text-xs">正常</Badge>
+                )}
+              </div>
+              {/* DNSSEC 状态 */}
+              <div className="mt-3 pt-3 border-t">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">DNSSEC:</span>
+                  <Badge variant={data.dnssec ? "default" : "outline"} className="text-xs">
+                    {data.dnssec ? '已启用' : '未启用'}
+                  </Badge>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Name Servers */}
             {data.nameServers && data.nameServers.length > 0 && (
