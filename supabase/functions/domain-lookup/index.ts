@@ -604,6 +604,122 @@ const RDAP_SERVERS: Record<string, string> = {
   'world': 'https://rdap.donuts.co/rdap/',
 };
 
+// ==================== 动态WHOIS服务器缓存 ====================
+let dynamicWhoisServers: Record<string, { server: string; port: number }> = {};
+let lastFetchTime = 0;
+const CACHE_DURATION = 3600000; // 1小时缓存
+
+// 从外部源获取WHOIS服务器列表
+async function fetchExternalWhoisServers(): Promise<void> {
+  const now = Date.now();
+  if (now - lastFetchTime < CACHE_DURATION && Object.keys(dynamicWhoisServers).length > 0) {
+    return; // 使用缓存
+  }
+
+  try {
+    // 并行获取两个数据源
+    const [serversRes, dataRes] = await Promise.allSettled([
+      fetch('https://whoislist.org/whois_servers.json', { 
+        signal: AbortSignal.timeout(5000),
+        headers: { 'User-Agent': 'RDAP-Lookup/1.0' }
+      }),
+      fetch('https://whoislist.org/data.json', { 
+        signal: AbortSignal.timeout(5000),
+        headers: { 'User-Agent': 'RDAP-Lookup/1.0' }
+      })
+    ]);
+
+    const newServers: Record<string, { server: string; port: number }> = {};
+
+    // 处理 whois_servers.json
+    if (serversRes.status === 'fulfilled' && serversRes.value.ok) {
+      try {
+        const serversData = await serversRes.value.json();
+        if (typeof serversData === 'object') {
+          for (const [tld, serverInfo] of Object.entries(serversData)) {
+            const cleanTld = tld.replace(/^\./, '').toLowerCase();
+            if (cleanTld && !WHOIS_SERVERS[cleanTld]) {
+              if (typeof serverInfo === 'string' && serverInfo) {
+                newServers[cleanTld] = { server: serverInfo, port: 43 };
+              } else if (typeof serverInfo === 'object' && serverInfo !== null) {
+                const info = serverInfo as any;
+                if (info.server || info.host || info.whois) {
+                  newServers[cleanTld] = { 
+                    server: info.server || info.host || info.whois, 
+                    port: info.port || 43 
+                  };
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Error parsing whois_servers.json:', e);
+      }
+    }
+
+    // 处理 data.json
+    if (dataRes.status === 'fulfilled' && dataRes.value.ok) {
+      try {
+        const dataJson = await dataRes.value.json();
+        if (Array.isArray(dataJson)) {
+          for (const item of dataJson) {
+            if (item && item.tld && (item.whois || item.server)) {
+              const cleanTld = String(item.tld).replace(/^\./, '').toLowerCase();
+              if (cleanTld && !WHOIS_SERVERS[cleanTld] && !newServers[cleanTld]) {
+                newServers[cleanTld] = { 
+                  server: item.whois || item.server, 
+                  port: item.port || 43 
+                };
+              }
+            }
+          }
+        } else if (typeof dataJson === 'object') {
+          for (const [tld, info] of Object.entries(dataJson)) {
+            const cleanTld = tld.replace(/^\./, '').toLowerCase();
+            if (cleanTld && !WHOIS_SERVERS[cleanTld] && !newServers[cleanTld]) {
+              if (typeof info === 'string' && info) {
+                newServers[cleanTld] = { server: info, port: 43 };
+              } else if (typeof info === 'object' && info !== null) {
+                const serverInfo = info as any;
+                if (serverInfo.whois || serverInfo.server || serverInfo.host) {
+                  newServers[cleanTld] = { 
+                    server: serverInfo.whois || serverInfo.server || serverInfo.host, 
+                    port: serverInfo.port || 43 
+                  };
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Error parsing data.json:', e);
+      }
+    }
+
+    if (Object.keys(newServers).length > 0) {
+      dynamicWhoisServers = { ...dynamicWhoisServers, ...newServers };
+      console.log(`Loaded ${Object.keys(newServers).length} additional WHOIS servers from external sources`);
+    }
+    lastFetchTime = now;
+  } catch (error) {
+    console.log('Error fetching external WHOIS servers:', error);
+  }
+}
+
+// 获取完整的WHOIS服务器配置（静态 + 动态）
+function getWhoisServer(tld: string): { server: string; port: number; query?: string; encoding?: string } | null {
+  // 优先使用静态配置
+  if (WHOIS_SERVERS[tld]) {
+    return WHOIS_SERVERS[tld];
+  }
+  // 然后使用动态配置
+  if (dynamicWhoisServers[tld]) {
+    return dynamicWhoisServers[tld];
+  }
+  return null;
+}
+
 // 解析域名获取TLD（支持IDN）
 function getTLD(domain: string): string {
   const parts = domain.toLowerCase().split('.');
@@ -654,8 +770,11 @@ function getTLD(domain: string): string {
 
 // 直接TCP连接WHOIS服务器查询
 async function queryWhoisDirect(domain: string, timeout: number = 10000): Promise<string> {
+  // 先尝试从外部源获取额外的WHOIS服务器
+  await fetchExternalWhoisServers();
+  
   const tld = getTLD(domain);
-  const serverInfo = WHOIS_SERVERS[tld];
+  const serverInfo = getWhoisServer(tld);
   
   if (!serverInfo) {
     throw new Error(`No WHOIS server found for .${tld} domains`);
@@ -663,17 +782,22 @@ async function queryWhoisDirect(domain: string, timeout: number = 10000): Promis
   
   console.log(`Connecting to WHOIS server: ${serverInfo.server}:${serverInfo.port} for ${domain}`);
   
-  try {
-    const connectPromise = Deno.connect({
-      hostname: serverInfo.server,
-      port: serverInfo.port,
-    });
-    
-    const connectTimeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Connection timeout')), timeout / 2);
-    });
-    
-    const conn = await Promise.race([connectPromise, connectTimeoutPromise]) as Deno.Conn;
+  // 支持重试机制
+  const maxRetries = 2;
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const connectPromise = Deno.connect({
+        hostname: serverInfo.server,
+        port: serverInfo.port,
+      });
+      
+      const connectTimeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), timeout / 2);
+      });
+      
+      const conn = await Promise.race([connectPromise, connectTimeoutPromise]) as Deno.Conn;
     
     let queryDomain = domain;
     if (isIDN(domain)) {
@@ -719,14 +843,21 @@ async function queryWhoisDirect(domain: string, timeout: number = 10000): Promis
       offset += chunk.length;
     }
     
-    const responseText = decoder.decode(result);
-    console.log(`WHOIS response received, length: ${responseText.length}`);
-    
-    return responseText;
-  } catch (error) {
-    console.error(`Direct WHOIS query failed for ${domain}:`, error.message);
-    throw error;
+      const responseText = decoder.decode(result);
+      console.log(`WHOIS response received, length: ${responseText.length}`);
+      
+      return responseText;
+    } catch (error) {
+      lastError = error;
+      console.error(`WHOIS query attempt ${attempt + 1} failed for ${domain}:`, error.message);
+      if (attempt < maxRetries) {
+        // 等待一小段时间后重试
+        await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+      }
+    }
   }
+  
+  throw lastError || new Error(`WHOIS query failed after ${maxRetries + 1} attempts`);
 }
 
 // RDAP查询
