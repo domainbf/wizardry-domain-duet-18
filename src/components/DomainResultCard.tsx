@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -369,7 +369,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   if (statusStr.includes('auto renew') || statusStr.includes('autorenew')) return { text: '自动续费中', variant: 'secondary' };
   if (statusStr.includes('addperiod')) return { text: '新注册保护期', variant: 'secondary' };
 
-  // --- 4. 基于时间的动态行为分析 ---
+  // --- 4. 基于时间的动态行为分�� ---
   if (!updateDate) return null;
   const diffTime = now.getTime() - updateDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -772,17 +772,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
         </Tabs>
       </CardContent>
 
-      <CardFooter className="flex flex-col items-center gap-4 py-4 border-t bg-muted/30">
-  <div className="flex items-center justify-center gap-8 flex-wrap">
-    <img src="/logo.png" alt=".RW" className="h-16 w-auto object-contain" />
-    <img src="/heise.png" alt="FAF" className="h-16 w-auto object-contain" />
-    <img src="/domainbf.png" alt="NIC.BN" className="h-16 w-auto object-contain" />
-    <img src="/x.rw.png" alt="LDKR" className="h-16 w-auto object-contain" />
-  </div>
-  <div className="text-xs text-muted-foreground">
-    © 2026 不讲·李. All rights reserved.
-  </div>
-</CardFooter>
+      
     </Card>
   );
 };
