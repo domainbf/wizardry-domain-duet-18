@@ -7,10 +7,10 @@ import { Info, Shield, Server, Copy, Check, ExternalLink, User, Clock, Lock, Glo
 import { useToast } from '@/hooks/use-toast';
 
 // 请将以下四张图片放入 public/assets 或相应路径，并替换实际文件名
-import rwLogo from '@/public/logo.png';
-import fafLogo from '@/public/heise.png';
-import bnLogo from '@/public/domainbf.png';
-import ldkrLogo from '@/public/x.rw.png';
+import rwLogo from 'public/logo.png';
+import fafLogo from 'public/heise.png';
+import bnLogo from 'public/domainbf.png';
+import ldkrLogo from 'public/x.rw.png';
 
 interface WhoisData {
   domain: string;
