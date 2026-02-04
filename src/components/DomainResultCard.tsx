@@ -721,16 +721,16 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
       </CardContent>
 
       <CardFooter className="flex flex-col items-center gap-4 py-4 border-t bg-muted/30">
-        <div className="flex items-center justify-center gap-8 flex-wrap">
-          <img src={rwLogo} alt=".RW" className="h-16 w-auto object-contain" />
-          <img src={fafLogo} alt="FAF" className="h-16 w-auto object-contain" />
-          <img src={bnLogo} alt="NIC.BN" className="h-16 w-auto object-contain" />
-          <img src={ldkrLogo} alt="LDKR" className="h-16 w-auto object-contain" />
-        </div>
-        <div className="text-xs text-muted-foreground">
-          © 2026 不讲·李. All rights reserved.
-        </div>
-      </CardFooter>
+  <div className="flex items-center justify-center gap-8 flex-wrap">
+    <img src="/logo.png" alt=".RW" className="h-16 w-auto object-contain" />
+    <img src="/heise.png" alt="FAF" className="h-16 w-auto object-contain" />
+    <img src="/domainbf.png" alt="NIC.BN" className="h-16 w-auto object-contain" />
+    <img src="/x.rw.png" alt="LDKR" className="h-16 w-auto object-contain" />
+  </div>
+  <div className="text-xs text-muted-foreground">
+    © 2026 不讲·李. All rights reserved.
+  </div>
+</CardFooter>
     </Card>
   );
 };
