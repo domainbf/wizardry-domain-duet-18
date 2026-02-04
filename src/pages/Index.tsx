@@ -48,14 +48,14 @@ const Index = () => {
       <footer className="mt-auto border-t bg-background">
         <div className="container max-w-2xl mx-auto px-4 py-6">
           {/* Partner Badges */}
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="flex items-center justify-center gap-6 mb-4">
             <a 
               href="https://nic.bn" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <img src="/logo.png" alt="NIC.BN" className="h-8 max-w-[120px] object-contain" />
+              <img src="/logo.png" alt="NIC.BN" className="h-6 w-auto object-contain" />
             </a>
             <a 
               href="https://china.tn" 
@@ -63,7 +63,7 @@ const Index = () => {
               rel="noopener noreferrer"
               className="flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <img src="/heise.png" alt="CHINA.TN" className="h-8 max-w-[120px] object-contain" />
+              <img src="/heise.png" alt="CHINA.TN" className="h-7 w-auto object-contain" />
             </a>
             <a 
               href="https://domain.bf" 
@@ -71,7 +71,7 @@ const Index = () => {
               rel="noopener noreferrer"
               className="flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <img src="/domainbf.png" alt="DOMAIN.BF" className="h-8 max-w-[120px] object-contain" />
+              <img src="/domainbf.png" alt="DOMAIN.BF" className="h-5 w-auto object-contain" />
             </a>
             <a 
               href="https://x.rw" 
@@ -79,7 +79,7 @@ const Index = () => {
               rel="noopener noreferrer"
               className="flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <img src="/x.rw.png" alt="X.RW" className="h-8 max-w-[120px] object-contain" />
+              <img src="/x.rw.png" alt="X.RW" className="h-5 w-auto object-contain" />
             </a>
           </div>
 

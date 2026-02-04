@@ -607,7 +607,7 @@ const RDAP_SERVERS: Record<string, string> = {
 // ==================== 动态WHOIS服务器缓存 ====================
 let dynamicWhoisServers: Record<string, { server: string; port: number }> = {};
 let lastFetchTime = 0;
-const CACHE_DURATION = 3600000; // 1小时缓存
+const CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30天缓存（约一个月）
 
 // 从外部源获取WHOIS服务器列表
 async function fetchExternalWhoisServers(): Promise<void> {
@@ -1107,7 +1107,7 @@ const STATUS_CODE_MAP: Record<string, string> = {
   'mianfeihold': '免费域名暂停',
   'bizdeleteprohibited': '企业禁止删除',
   'org-mandatory': '组织资质审核',
-  'georestricted': '地域限制',
+  'georestricted': '地���限制',
   'nonresident': '非本地居民',
   'agentrequired': '代理审核中',
   'individualhold': '个人注册锁定',

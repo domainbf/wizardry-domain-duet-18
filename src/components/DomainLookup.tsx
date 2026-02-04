@@ -159,7 +159,11 @@ const DomainLookup = () => {
 
       {/* Pricing */}
       {(pricing || pricingLoading) && (
-        <PricingInfo pricing={pricing} loading={pricingLoading} />
+        <PricingInfo 
+          pricing={pricing} 
+          loading={pricingLoading} 
+          source={result?.rawData?.primary?.source || result?.rawData?.secondary?.source || null}
+        />
       )}
 
       {/* Loading */}
