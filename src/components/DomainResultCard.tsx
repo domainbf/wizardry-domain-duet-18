@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info, Shield, Server, Copy, Check, ExternalLink, User, Clock, Lock, Globe, Trash2 } from 'lucide-react';
+import { Info, Shield, Server, Copy, Check, ExternalLink, User, Clock, Lock, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface WhoisData {
@@ -449,7 +449,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
           </div>
 
           <TabsContent value="overview" className="p-6 space-y-6 mt-0">
-            {/* ... 这里保持你原本的 Overview 内容不变 ... */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -683,7 +682,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
           </TabsContent>
 
           <TabsContent value="raw" className="p-6 mt-0">
-            {/* ... 这里保持你原本的 Raw 内容不变 ... */}
             <div className="flex items-center justify-between mb-3">
               <h3 className="flex items-center gap-2 text-sm font-semibold">
                 <Info className="h-4 w-4" />
@@ -716,43 +714,17 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
         </Tabs>
       </CardContent>
 
-      {/* --- 修改后的 Footer 部分 --- */}
-      <CardFooter className="flex flex-col w-full p-4 gap-6 border-t bg-muted/30">
-        
-        {/* 1. 最近查询 (移至上方) */}
-        <div className="w-full">
-          <div className="flex items-center justify-between mb-3 px-2">
-            <span className="text-sm font-bold text-foreground">最近查询</span>
-            <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-destructive">
-              <Trash2 className="h-3 w-3 mr-1" />
-              清空
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2 px-2">
-            {['hello.com', 'wei.ge', 'ge.ge'].map((domain) => (
-              <Badge key={domain} variant="secondary" className="bg-background border font-normal cursor-pointer hover:bg-muted">
-                {domain}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* 2. 徽章区域 (缩放至一排显示，不超出屏幕) */}
-        <div className="w-full overflow-hidden px-2">
-          <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-8">
-            <img src="/logo.png" alt="NIC.BN" className="h-10 sm:h-14 w-auto object-contain flex-shrink-1 min-w-0" />
-            <img src="/heise.png" alt="CHINA.TN" className="h-10 sm:h-14 w-auto object-contain flex-shrink-1 min-w-0" />
-            <img src="/domainbf.png" alt="DOMAIN.BF" className="h-6 sm:h-8 w-auto object-contain flex-shrink-1 min-w-0 opacity-80" />
-            <img src="/x.rw.png" alt="X.RW" className="h-6 sm:h-8 w-auto object-contain flex-shrink-1 min-w-0 opacity-80" />
-          </div>
-        </div>
-
-        {/* 3. 版权放置页面底部 */}
-        <div className="text-xs text-muted-foreground/60 text-center pb-2">
-          © 2026 不讲·李. All rights reserved.
-        </div>
-
-      </CardFooter>
+      <CardFooter className="flex flex-col items-center gap-4 py-4 border-t bg-muted/30">
+  <div className="flex items-center justify-center gap-8 flex-wrap">
+    <img src="/logo.png" alt=".RW" className="h-16 w-auto object-contain" />
+    <img src="/heise.png" alt="FAF" className="h-16 w-auto object-contain" />
+    <img src="/domainbf.png" alt="NIC.BN" className="h-16 w-auto object-contain" />
+    <img src="/x.rw.png" alt="LDKR" className="h-16 w-auto object-contain" />
+  </div>
+  <div className="text-xs text-muted-foreground">
+    © 2026 不讲·李. All rights reserved.
+  </div>
+</CardFooter>
     </Card>
   );
 };
