@@ -15,8 +15,8 @@ const Index = () => {
   }, [isDark]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-2xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="container max-w-2xl mx-auto px-4 py-8 flex-1">
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="space-y-2">
@@ -43,6 +43,52 @@ const Index = () => {
         {/* Main Lookup Component */}
         <DomainLookup />
       </div>
+
+      {/* Sticky Footer */}
+      <footer className="mt-auto border-t bg-background">
+        <div className="container max-w-2xl mx-auto px-4 py-6">
+          {/* Partner Badges */}
+          <div className="flex items-center justify-center gap-6 mb-4">
+            <a 
+              href="https://nic.bn" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center h-10 hover:opacity-80 transition-opacity"
+            >
+              <img src="/logo.png" alt="NIC.BN" className="h-10 w-auto object-contain" />
+            </a>
+            <a 
+              href="https://china.tn" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center h-10 hover:opacity-80 transition-opacity"
+            >
+              <img src="/heise.png" alt="CHINA.TN" className="h-10 w-auto object-contain" />
+            </a>
+            <a 
+              href="https://domain.bf" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center h-10 hover:opacity-80 transition-opacity"
+            >
+              <img src="/domainbf.png" alt="DOMAIN.BF" className="h-10 w-auto object-contain" />
+            </a>
+            <a 
+              href="https://x.rw" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center h-10 hover:opacity-80 transition-opacity"
+            >
+              <img src="/x.rw.png" alt="X.RW" className="h-10 w-auto object-contain" />
+            </a>
+          </div>
+
+          {/* Copyright */}
+          <p className="text-xs text-muted-foreground text-center">
+            © 2026 不讲·李. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

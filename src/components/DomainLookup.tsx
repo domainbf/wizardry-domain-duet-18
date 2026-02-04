@@ -180,31 +180,6 @@ const DomainLookup = () => {
         onSelect={handleRecentSelect}
         onClear={clearQueries}
       />
-
-      {/* Partner Badges */}
-      <div className="mt-8 pt-6 border-t">
-        <div className="grid grid-cols-4 gap-4">
-          <div className="flex items-center justify-center aspect-[3/2] bg-muted/30 rounded-lg p-3">
-            <img src="/logo.png" alt="NIC.BN" className="max-h-12 w-auto object-contain" />
-          </div>
-          <div className="flex items-center justify-center aspect-[3/2] bg-muted/30 rounded-lg p-3">
-            <img src="/heise.png" alt="CHINA.TN" className="max-h-12 w-auto object-contain" />
-          </div>
-          <div className="flex items-center justify-center aspect-[3/2] bg-muted/30 rounded-lg p-3">
-            <img src="/domainbf.png" alt="DOMAIN.BF" className="max-h-12 w-auto object-contain" />
-          </div>
-          <div className="flex items-center justify-center aspect-[3/2] bg-muted/30 rounded-lg p-3">
-            <img src="/x.rw.png" alt="X.RW" className="max-h-12 w-auto object-contain" />
-          </div>
-        </div>
-      </div>
-
-      {/* Copyright Footer */}
-      <footer className="mt-8 pt-4 border-t text-center">
-        <p className="text-xs text-muted-foreground">
-          © 2026 不讲·李. All rights reserved.
-        </p>
-      </footer>
     </div>
   );
 };
