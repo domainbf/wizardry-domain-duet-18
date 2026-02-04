@@ -428,7 +428,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     const hoursFromNow = diffTime / (1000 * 60 * 60);
     
     // 如果更新时间与当前时间相差不到24小时，认为是查询时间
-    return hoursFromNow < 24;
+    return hoursFromNow < 2;
   };
   
   const showAsQueryTime = isQueryTime();
@@ -473,13 +473,13 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                       value="overview" 
                       className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
                     >
-                      概览
+                      标准
                     </TabsTrigger>
                     <TabsTrigger 
                       value="raw" 
                       className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
                     >
-                      原始数据
+                      数据
                     </TabsTrigger>
                   </TabsList>
                   <Badge variant="default" className="text-xs">
@@ -672,7 +672,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="flex items-center gap-2 text-sm font-semibold">
                 <Info className="h-4 w-4" />
-                原始WHOIS数据
+                可显示
               </h3>
               <div className="flex items-center gap-2">
                 <Button
