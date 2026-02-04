@@ -22,7 +22,7 @@ const Index = () => {
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">RDAP 域名查询</h1>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              输入域名或 IDN。我们将验证、规范化并转换为 punycode。如果 RDAP 不可用，将回退到 WHOIS。
+              输入域名或 IDN。我们将验证、规范化整理信息显示。如果 RDAP 不可用，将回退到 WHOIS。
             </p>
           </div>
           <div className="flex items-center gap-1">
