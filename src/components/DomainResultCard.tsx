@@ -513,28 +513,23 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                   <Info className="h-4 w-4" />
                   域名信息
                 </h3>
-                <div className="flex items-center gap-2">
-                  <TabsList className="bg-muted p-1 h-auto gap-1">
-                    <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
-                      标准
-                    </TabsTrigger>
-                    <TabsTrigger value="raw" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
-                      数据
-                    </TabsTrigger>
-                  </TabsList>
-                  <Badge variant="default" className="text-xs">
-                    {data.source === 'primary' ? 'RDAP' : 'WHOIS'}
-                  </Badge>
-                </div>
+                <TabsList className="bg-muted p-1 h-auto gap-1">
+                  <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
+                    标准
+                  </TabsTrigger>
+                  <TabsTrigger value="raw" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
+                    数据
+                  </TabsTrigger>
+                </TabsList>
               </div>
               <div className="space-y-2">
                 {data.registrar && data.registrar !== 'Unknown' && data.registrar !== 'N/A' && (
                   <div className="info-row">
                     <div className="info-row-label">注册商</div>
-                    <div className="info-row-value flex items-center gap-2">
-                      <span>{data.registrar}</span>
+                    <div className="info-row-value flex items-center gap-2 flex-wrap">
+                      <span className="break-all flex-1 min-w-0">{data.registrar}</span>
                       {registrarUrl && (
-                        <Button variant="outline" size="sm" onClick={() => window.open(registrarUrl, '_blank')} className="h-6 px-2 text-xs">
+                        <Button variant="outline" size="sm" onClick={() => window.open(registrarUrl, '_blank')} className="h-6 px-2 text-xs shrink-0">
                           <ExternalLink className="h-3 w-3 mr-1" />
                           官网
                         </Button>
@@ -650,45 +645,26 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                 域名状态
               </h3>
               <div className="space-y-3">
-                {clientStatuses.length > 0 && (
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">客户端状态</div>
-                    <div className="flex flex-wrap gap-2">
-                      {clientStatuses.map((status, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {getStatusChinese(status)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {serverStatuses.length > 0 && (
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">服务器状态</div>
-                    <div className="flex flex-wrap gap-2">
-                      {serverStatuses.map((status, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {getStatusChinese(status)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {otherStatuses.length > 0 && (
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">其他状态</div>
-                    <div className="flex flex-wrap gap-2">
-                      {otherStatuses.map((status, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {getStatusChinese(status)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {(clientStatuses.length === 0 && serverStatuses.length === 0 && otherStatuses.length === 0) && (
-                  <Badge variant="secondary" className="text-xs">正常</Badge>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {clientStatuses.map((status, i) => (
+                    <Badge key={`client-${i}`} variant="secondary" className="text-xs">
+                      {getStatusChinese(status)}
+                    </Badge>
+                  ))}
+                  {serverStatuses.map((status, i) => (
+                    <Badge key={`server-${i}`} variant="secondary" className="text-xs">
+                      {getStatusChinese(status)}
+                    </Badge>
+                  ))}
+                  {otherStatuses.map((status, i) => (
+                    <Badge key={`other-${i}`} variant="secondary" className="text-xs">
+                      {getStatusChinese(status)}
+                    </Badge>
+                  ))}
+                  {(clientStatuses.length === 0 && serverStatuses.length === 0 && otherStatuses.length === 0) && (
+                    <Badge variant="secondary" className="text-xs">正常</Badge>
+                  )}
+                </div>
                 <div className="mt-4 pt-3 border-t flex items-center gap-3">
                   <span className="text-sm text-muted-foreground">DNSSEC:</span>
                   <Badge variant={data.dnssec ? "default" : "outline"} className="text-xs">
@@ -696,11 +672,11 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                   </Badge>
                 </div>
                 {privacyProtected && (
-                  <div className="mt-3 flex items-center gap-2">
+                  <div className="mt-3 flex items-center gap-2 select-none pointer-events-none">
                     <Lock className="h-4 w-4 text-green-600" />
-                    <Badge variant="default" className="bg-green-100 text-green-800">
+                    <span className="inline-flex items-center rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
                       WHOIS隐私保护已启用
-                    </Badge>
+                    </span>
                   </div>
                 )}
               </div>

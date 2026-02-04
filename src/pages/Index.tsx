@@ -3,8 +3,17 @@ import { Sun, Moon, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 
+// 徽章配置：支持图片或纯文字显示
+const PARTNER_BADGES = [
+  { name: 'NIC.BN', url: 'https://nic.bn', image: '/logo.png', height: 'h-6' },
+  { name: 'CHINA.TN', url: 'https://china.tn', image: '/heise.png', height: 'h-7' },
+  { name: 'DOMAIN.BF', url: 'https://domain.bf', image: '/domainbf.png', height: 'h-5' },
+  { name: 'X.RW', url: 'https://x.rw', image: '/x.rw.png', height: 'h-5' },
+];
+
 const Index = () => {
   const [isDark, setIsDark] = useState(false);
+  const [badgeImageErrors, setBadgeImageErrors] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (isDark) {
@@ -13,6 +22,10 @@ const Index = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  const handleImageError = (name: string) => {
+    setBadgeImageErrors(prev => ({ ...prev, [name]: true }));
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
