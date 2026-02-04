@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -441,319 +441,268 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   const getRawDataString = () => JSON.stringify(rawData || data, null, 2);
 
   return (
-    <Card className="border">
-      <CardContent className="p-0">
-        <Tabs defaultValue="overview" className="w-full">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-xl font-bold uppercase break-all">{data.domain}</h2>
-          </div>
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* 1. 顶部结果详情板块 */}
+      <Card className="border shadow-none mb-8">
+        <CardContent className="p-0">
+          <Tabs defaultValue="overview" className="w-full">
+            <div className="px-6 py-4 border-b">
+              <h2 className="text-xl font-bold uppercase break-all">{data.domain}</h2>
+            </div>
 
-          <TabsContent value="overview" className="p-6 space-y-6 mt-0">
-            {/* ... 这里保持你原本的 Overview 内容不变 ... */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="flex items-center gap-2 text-sm font-semibold">
-                  <Info className="h-4 w-4" />
-                  域名信息
-                </h3>
-                <div className="flex items-center gap-2">
-                  <TabsList className="bg-muted p-1 h-auto gap-1">
-                    <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
-                      标准
-                    </TabsTrigger>
-                    <TabsTrigger value="raw" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
-                      数据
-                    </TabsTrigger>
-                  </TabsList>
-                  <Badge variant="default" className="text-xs">
-                    {data.source === 'primary' ? 'RDAP' : 'WHOIS'}
-                  </Badge>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="info-row">
-                  <div className="info-row-label">注册商</div>
-                  <div className="info-row-value flex items-center gap-2">
-                    <span>{data.registrar || 'N/A'}</span>
-                    {registrarUrl && (
-                      <Button variant="outline" size="sm" onClick={() => window.open(registrarUrl, '_blank')} className="h-6 px-2 text-xs">
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        官网
-                      </Button>
-                    )}
+            <TabsContent value="overview" className="p-6 space-y-6 mt-0">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold">
+                    <Info className="h-4 w-4" />
+                    域名信息
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <TabsList className="bg-muted p-1 h-auto gap-1">
+                      <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
+                        标准
+                      </TabsTrigger>
+                      <TabsTrigger value="raw" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
+                        数据
+                      </TabsTrigger>
+                    </TabsList>
+                    <Badge variant="default" className="text-xs">
+                      {data.source === 'primary' ? 'RDAP' : 'WHOIS'}
+                    </Badge>
                   </div>
                 </div>
-                <div className="info-row">
-                  <div className="info-row-label">注册时间</div>
-                  <div className="info-row-value flex items-center gap-2">
-                    <span>{formatDate(data.registrationDate)}</span>
-                    {registrationTag && (
-                      <Badge variant={registrationTag.variant} className="text-xs">
-                        {registrationTag.text}
-                      </Badge>
-                    )}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                    <div className="text-sm text-muted-foreground">注册商</div>
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <span>{data.registrar || 'N/A'}</span>
+                      {registrarUrl && (
+                        <Button variant="outline" size="sm" onClick={() => window.open(registrarUrl, '_blank')} className="h-6 px-2 text-xs">
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          官网
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {!showAsQueryTime && data.lastUpdated && (
-                  <div className="info-row">
-                    <div className="info-row-label">更新时间</div>
-                    <div className="info-row-value flex items-center gap-2">
-                      <span>{formatDate(data.lastUpdated)}</span>
-                      {updateTag && (
-                        <Badge variant={updateTag.variant} className="text-xs">
-                          {updateTag.text}
+                  <div className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                    <div className="text-sm text-muted-foreground">注册时间</div>
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <span>{formatDate(data.registrationDate)}</span>
+                      {registrationTag && (
+                        <Badge variant={registrationTag.variant} className="text-xs">
+                          {registrationTag.text}
                         </Badge>
                       )}
                     </div>
                   </div>
-                )}
-                <div className="info-row">
-                  <div className="info-row-label">过期时间</div>
-                  <div className="info-row-value flex items-center gap-2">
-                    <span>{formatDate(data.expirationDate)}</span>
-                    {expirationTag && (
-                      <Badge variant={expirationTag.variant} className={`text-xs border ${getExpirationBadgeClass()}`}>
-                        {expirationTag.text}
-                      </Badge>
+                  {!showAsQueryTime && data.lastUpdated && (
+                    <div className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                      <div className="text-sm text-muted-foreground">更新时间</div>
+                      <div className="text-sm font-medium flex items-center gap-2">
+                        <span>{formatDate(data.lastUpdated)}</span>
+                        {updateTag && (
+                          <Badge variant={updateTag.variant} className="text-xs">
+                            {updateTag.text}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                    <div className="text-sm text-muted-foreground">过期时间</div>
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <span>{formatDate(data.expirationDate)}</span>
+                      {expirationTag && (
+                        <Badge variant={expirationTag.variant} className={`text-xs border ${getExpirationBadgeClass()}`}>
+                          {expirationTag.text}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {showAsQueryTime && data.lastUpdated && (
+                    <div className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                      <div className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        查询时间
+                      </div>
+                      <div className="text-sm font-medium">
+                        <span>{formatDate(data.lastUpdated)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {hasRegistrantInfo && (
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
+                    <User className="h-4 w-4" />
+                    注册人信息
+                  </h3>
+                  <div className="space-y-2">
+                    {data.registrant?.name && (
+                      <div className="flex justify-between items-center py-1 border-b border-dashed border-muted text-sm">
+                        <div className="text-muted-foreground">姓名</div>
+                        <div className="font-medium text-right">{data.registrant.name}</div>
+                      </div>
+                    )}
+                    {data.registrant?.organization && (
+                      <div className="flex justify-between items-center py-1 border-b border-dashed border-muted text-sm">
+                        <div className="text-muted-foreground">组织</div>
+                        <div className="font-medium text-right">{data.registrant.organization}</div>
+                      </div>
+                    )}
+                    {data.registrant?.email && (
+                      <div className="flex justify-between items-center py-1 border-b border-dashed border-muted text-sm">
+                        <div className="text-muted-foreground">邮箱</div>
+                        <div className="font-medium text-right">{data.registrant.email}</div>
+                      </div>
+                    )}
+                    {data.registrant?.phone && (
+                      <div className="flex justify-between items-center py-1 border-b border-dashed border-muted text-sm">
+                        <div className="text-muted-foreground">电话</div>
+                        <div className="font-medium text-right">{data.registrant.phone}</div>
+                      </div>
+                    )}
+                    {data.registrant?.country && (
+                      <div className="flex justify-between items-center py-1 border-b border-dashed border-muted text-sm">
+                        <div className="text-muted-foreground">国家</div>
+                        <div className="font-medium text-right">{data.registrant.country}</div>
+                      </div>
                     )}
                   </div>
                 </div>
-                {showAsQueryTime && data.lastUpdated && (
-                  <div className="info-row">
-                    <div className="info-row-label flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      查询时间
-                    </div>
-                    <div className="info-row-value">
-                      <span>{formatDate(data.lastUpdated)}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+              )}
 
-            {hasRegistrantInfo && (
               <div>
-                <h3 className="section-title">
-                  <User className="h-4 w-4" />
-                  注册人信息
+                <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
+                  <Shield className="h-4 w-4" />
+                  域名状态
                 </h3>
-                <div className="space-y-2">
-                  {data.registrant?.name && (
-                    <div className="info-row">
-                      <div className="info-row-label">姓名</div>
-                      <div className="info-row-value">{data.registrant.name}</div>
-                    </div>
-                  )}
-                  {data.registrant?.organization && (
-                    <div className="info-row">
-                      <div className="info-row-label">组织</div>
-                      <div className="info-row-value">{data.registrant.organization}</div>
-                    </div>
-                  )}
-                  {data.registrant?.email && (
-                    <div className="info-row">
-                      <div className="info-row-label">邮箱</div>
-                      <div className="info-row-value">{data.registrant.email}</div>
-                    </div>
-                  )}
-                  {data.registrant?.phone && (
-                    <div className="info-row">
-                      <div className="info-row-label">电话</div>
-                      <div className="info-row-value">{data.registrant.phone}</div>
-                    </div>
-                  )}
-                  {(data.registrant?.city || data.registrant?.state) && (
-                    <div className="info-row">
-                      <div className="info-row-label">地区</div>
-                      <div className="info-row-value">
-                        {[data.registrant.city, data.registrant.state].filter(Boolean).join(', ')}
-                      </div>
-                    </div>
-                  )}
-                  {data.registrant?.country && (
-                    <div className="info-row">
-                      <div className="info-row-label">国家</div>
-                      <div className="info-row-value">{data.registrant.country}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <h3 className="section-title">
-                <Shield className="h-4 w-4" />
-                域名状态
-              </h3>
-              <div className="space-y-3">
-                {clientStatuses.length > 0 && (
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">客户端状态</div>
+                <div className="space-y-3">
+                  {clientStatuses.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {clientStatuses.map((status, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
+                        <Badge key={i} variant="secondary" className="text-xs font-normal">
                           {getStatusChinese(status)}
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
-                {serverStatuses.length > 0 && (
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">服务器状态</div>
+                  )}
+                  {serverStatuses.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {serverStatuses.map((status, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
+                        <Badge key={i} variant="secondary" className="text-xs font-normal">
                           {getStatusChinese(status)}
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
-                {otherStatuses.length > 0 && (
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">其他状态</div>
-                    <div className="flex flex-wrap gap-2">
-                      {otherStatuses.map((status, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {getStatusChinese(status)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {(clientStatuses.length === 0 && serverStatuses.length === 0 && otherStatuses.length === 0) && (
-                  <Badge variant="secondary" className="text-xs">正常</Badge>
-                )}
-                <div className="mt-4 pt-3 border-t flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">DNSSEC:</span>
-                  <Badge variant={data.dnssec ? "default" : "outline"} className="text-xs">
-                    {data.dnssec ? '已启用' : '未启用'}
-                  </Badge>
-                </div>
-                {privacyProtected && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-green-600" />
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      WHOIS隐私保护已启用
+                  )}
+                  <div className="mt-4 pt-3 border-t flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">DNSSEC:</span>
+                    <Badge variant={data.dnssec ? "default" : "outline"} className="text-xs font-normal">
+                      {data.dnssec ? '已启用' : '未启用'}
                     </Badge>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {data.nameServers && data.nameServers.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="section-title">
-                    <Server className="h-4 w-4" />
-                    域名服务器
-                  </h3>
-                  {nsProvider && (
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-blue-600" />
-                      <Badge variant="outline" className="text-xs">
-                        {nsProvider} 解析
-                      </Badge>
+                  {privacyProtected && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-700 font-medium bg-green-50 px-2 py-0.5 rounded">WHOIS 隐私保护已启用</span>
                     </div>
                   )}
                 </div>
-                <div className="space-y-2">
-                  {data.nameServers.map((ns, index) => (
-                    <div key={index} className="ns-row">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="text-muted-foreground text-sm flex-shrink-0">NS{index + 1}:</span>
-                        <span className="text-sm font-mono truncate">{ns}</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyToClipboard(ns)}
-                        className="h-8 flex-shrink-0"
-                      >
-                        {copiedNs === ns ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                        <span className="ml-1">复制</span>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
               </div>
-            )}
-          </TabsContent>
 
-          <TabsContent value="raw" className="p-6 mt-0">
-            {/* ... 这里保持你原本的 Raw 内容不变 ... */}
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="flex items-center gap-2 text-sm font-semibold">
-                <Info className="h-4 w-4" />
-                原始数据
-              </h3>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyToClipboard(getRawDataString(), 'raw')}
-                  className="h-8"
-                >
+              {data.nameServers && data.nameServers.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold">
+                      <Server className="h-4 w-4" />
+                      域名服务器
+                    </h3>
+                    {nsProvider && (
+                      <Badge variant="outline" className="text-[10px] text-blue-600 border-blue-200">
+                        {nsProvider} 解析
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {data.nameServers.map((ns, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[10px] text-muted-foreground">NS{index + 1}</span>
+                          <span className="text-xs font-mono truncate">{ns}</span>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => copyToClipboard(ns)} className="h-8 hover:bg-white border">
+                          {copiedNs === ns ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                          <span className="ml-1 text-xs">复制</span>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="raw" className="p-6 mt-0">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold">
+                  <Info className="h-4 w-4" />
+                  原始数据
+                </h3>
+                <Button variant="outline" size="sm" onClick={() => copyToClipboard(getRawDataString(), 'raw')} className="h-8">
                   {copiedRaw ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
                   复制全部
                 </Button>
-                <TabsList className="bg-muted p-1 h-auto gap-1">
-                  <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
-                    标准
-                  </TabsTrigger>
-                  <TabsTrigger value="raw" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs">
-                    数据
-                  </TabsTrigger>
-                </TabsList>
               </div>
-            </div>
-            <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[500px] font-mono break-all whitespace-pre-wrap">
-              {getRawDataString()}
-            </pre>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
+              <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[500px] font-mono break-all whitespace-pre-wrap leading-relaxed">
+                {getRawDataString()}
+              </pre>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
-      {/* --- 修改后的 Footer 部分 --- */}
-      <CardFooter className="flex flex-col w-full p-4 gap-6 border-t bg-muted/30">
+      {/* 2. 独立底部：最近查询、徽章、版权 */}
+      <div className="w-full mt-auto space-y-8 pb-10">
         
-        {/* 1. 最近查询 (移至上方) */}
-        <div className="w-full">
-          <div className="flex items-center justify-between mb-3 px-2">
+        {/* 最近查询 (保持原本位置并置于徽章上方) */}
+        <div className="px-4">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-bold text-foreground">最近查询</span>
-            <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-destructive">
-              <Trash2 className="h-3 w-3 mr-1" />
+            <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
+              <Trash2 className="h-3 w-3" />
               清空
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2 px-2">
-            {['hello.com', 'wei.ge', 'ge.ge'].map((domain) => (
-              <Badge key={domain} variant="secondary" className="bg-background border font-normal cursor-pointer hover:bg-muted">
-                {domain}
+          <div className="flex flex-wrap gap-2">
+            {['hello.com', 'wei.ge', 'ge.ge'].map((item) => (
+              <Badge key={item} variant="secondary" className="bg-white border text-muted-foreground font-normal px-4 py-1.5 rounded-full cursor-pointer hover:bg-muted transition-colors">
+                {item}
               </Badge>
             ))}
           </div>
         </div>
 
-        {/* 2. 徽章区域 (缩放至一排显示，不超出屏幕) */}
-        <div className="w-full overflow-hidden px-2">
-          <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-8">
-            <img src="/logo.png" alt="NIC.BN" className="h-10 sm:h-14 w-auto object-contain flex-shrink-1 min-w-0" />
-            <img src="/heise.png" alt="CHINA.TN" className="h-10 sm:h-14 w-auto object-contain flex-shrink-1 min-w-0" />
-            <img src="/domainbf.png" alt="DOMAIN.BF" className="h-6 sm:h-8 w-auto object-contain flex-shrink-1 min-w-0 opacity-80" />
-            <img src="/x.rw.png" alt="X.RW" className="h-6 sm:h-8 w-auto object-contain flex-shrink-1 min-w-0 opacity-80" />
+        {/* 徽章行 (缩放至横向一排，不换行) */}
+        <div className="px-4 overflow-hidden">
+          <div className="flex flex-nowrap items-center justify-center gap-4 sm:gap-12">
+            <img src="/logo.png" alt="NIC.BN" className="h-9 sm:h-14 w-auto object-contain flex-shrink min-w-0" />
+            <img src="/heise.png" alt="CHINA.TN" className="h-9 sm:h-14 w-auto object-contain flex-shrink min-w-0" />
+            <img src="/domainbf.png" alt="DOMAIN.BF" className="h-5 sm:h-8 w-auto object-contain flex-shrink min-w-0 opacity-60 grayscale" />
+            <img src="/x.rw.png" alt="X.RW" className="h-5 sm:h-8 w-auto object-contain flex-shrink min-w-0 opacity-60 grayscale" />
           </div>
         </div>
 
-        {/* 3. 版权放置页面底部 */}
-        <div className="text-xs text-muted-foreground/60 text-center pb-2">
-          © 2026 不讲·李. All rights reserved.
+        {/* 版权信息 (最底部) */}
+        <div className="text-center">
+          <p className="text-[10px] sm:text-xs text-muted-foreground/40 tracking-widest uppercase">
+            © 2026 不讲·李. All rights reserved.
+          </p>
         </div>
 
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 
