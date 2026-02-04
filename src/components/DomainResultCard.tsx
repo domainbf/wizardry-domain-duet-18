@@ -693,13 +693,13 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                     value="overview" 
                     className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
                   >
-                    概览
+                    标准
                   </TabsTrigger>
                   <TabsTrigger 
                     value="raw" 
                     className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1 text-xs"
                   >
-                    原始数据
+                    数据
                   </TabsTrigger>
                 </TabsList>
               </div>
