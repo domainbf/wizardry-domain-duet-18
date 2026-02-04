@@ -336,24 +336,67 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
 
 
   const getUpdateTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
-    const statusStr = data.status.join(' ').toLowerCase();
-    if (statusStr.includes('pending transfer') || statusStr.includes('pendingtransfer')) {
-      return { text: '转移中', variant: 'destructive' };
-    }
-    const updateDate = parseDate(data.lastUpdated);
-    if (!updateDate) return null;
-    const now = new Date();
-    const diffTime = now.getTime() - updateDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays <= 1) return null;
-    if (diffDays <= 7) {
-      if (statusStr.includes('transfer')) return { text: '近期转移', variant: 'secondary' };
-      return { text: '刚刚续费', variant: 'secondary' };
-    }
-    if (diffDays <= 30) return { text: '近期更新', variant: 'outline' };
-    if (diffDays <= 90) return { text: '3月内更新', variant: 'outline' };
-    return null;
-  };
+  const statusStr = data.status.join(' ').toLowerCase();
+  const updateDate = parseDate(data.lastUpdated);
+  const now = new Date();
+  const regDate = parseDate(data.registrationDate);
+  
+  // --- 1. 核心安全与争议判定 (最高优先级) ---
+  if (statusStr.includes('pending delete') || statusStr.includes('pendingdelete')) return { text: '进入删除期', variant: 'destructive' };
+  if (statusStr.includes('redemption period') || statusStr.includes('redemptionperiod')) return { text: '赎回期限制', variant: 'destructive' };
+  if (statusStr.includes('dispute')) return { text: '法律争议中', variant: 'destructive' };
+  if (statusStr.includes('quarantine')) return { text: '隔离保护期', variant: 'destructive' };
+  
+  // 针对 Hold 状态（不仅是停止解析，往往意味着未实名或政策限制）
+  if (statusStr.includes('client hold') || statusStr.includes('clienthold')) return { text: '注册商暂停解析', variant: 'destructive' };
+  if (statusStr.includes('server hold') || statusStr.includes('serverhold')) return { text: '注册局禁止解析', variant: 'destructive' };
+
+  // --- 2. 锁定状态细分 (安全保障判定) ---
+  const isUpdateProhibited = statusStr.includes('update prohibited') || statusStr.includes('updateprohibited');
+  const isTransferProhibited = statusStr.includes('transfer prohibited') || statusStr.includes('transferprohibited');
+  const isDeleteProhibited = statusStr.includes('delete prohibited') || statusStr.includes('deleteprohibited');
+
+  if (isUpdateProhibited && isTransferProhibited && isDeleteProhibited) {
+    return { text: '全功能高密锁定', variant: 'default' };
+  }
+  if (isTransferProhibited) {
+    if (statusStr.includes('server')) return { text: '注册局禁止转移', variant: 'default' };
+    return { text: '禁止转移锁定', variant: 'outline' };
+  }
+
+  // --- 3. 业务动作与生命周期判定 ---
+  if (statusStr.includes('pending transfer') || statusStr.includes('pendingtransfer')) return { text: '正在跨商转移', variant: 'destructive' };
+  if (statusStr.includes('auto renew') || statusStr.includes('autorenew')) return { text: '自动续费中', variant: 'secondary' };
+  if (statusStr.includes('addperiod')) return { text: '新注册保护期', variant: 'secondary' };
+
+  // --- 4. 基于时间的动态行为分析 ---
+  if (!updateDate) return null;
+  const diffTime = now.getTime() - updateDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+
+  // 极短时间内的变动分析
+  if (diffHours <= 1) return { text: '刚刚瞬间更新', variant: 'secondary' };
+  if (diffHours <= 24) {
+    // 如果今天更新且注册时间也是今天，则是新开通
+    if (regDate && (now.getTime() - regDate.getTime()) < 86400000) return { text: '新注成功', variant: 'secondary' };
+    return { text: '今日有过变更', variant: 'secondary' };
+  }
+
+  // 关键动作预测
+  if (diffDays <= 7) {
+    if (statusStr.includes('ok') || statusStr.includes('active')) return { text: '续费/转移已生效', variant: 'secondary' };
+    return { text: '本周资料修正', variant: 'secondary' };
+  }
+
+  // 长期稳定性判定
+  if (diffDays <= 30) return { text: '月内数据更新', variant: 'outline' };
+  if (diffDays <= 180) return { text: '半年内有过更新', variant: 'outline' };
+  if (diffDays >= 730) return { text: '超两年未变动', variant: 'outline' }; // 极其稳定的老站
+
+  return null;
+};
+
 
   const getExpirationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
     const expDate = parseDate(data.expirationDate);
