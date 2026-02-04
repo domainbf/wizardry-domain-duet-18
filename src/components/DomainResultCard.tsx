@@ -27,9 +27,7 @@ interface WhoisData {
   source: 'primary' | 'secondary';
 }
 
-// 域名状态中英文映射（原代码保留）
 const STATUS_MAPPING: Record<string, string> = {
-  // ...（原映射全部保留，未改动）
   'client delete prohibited': '客户端删除禁止',
   'client transfer prohibited': '客户端转移禁止',
   'client update prohibited': '客户端更新禁止',
@@ -76,9 +74,152 @@ const STATUS_MAPPING: Record<string, string> = {
   'verified': '已验证',
 };
 
-// 注册商官网映射（原代码保留，略）
+const REGISTRAR_URLS: Record<string, string> = {
+  'godaddy': 'https://www.godaddy.com',
+  'godaddy.com': 'https://www.godaddy.com',
+  'godaddy.com, llc': 'https://www.godaddy.com',
+  'namecheap': 'https://www.namecheap.com',
+  'namecheap, inc.': 'https://www.namecheap.com',
+  'cloudflare': 'https://www.cloudflare.com',
+  'cloudflare, inc.': 'https://www.cloudflare.com',
+  'google': 'https://domains.google',
+  'google llc': 'https://domains.google',
+  'google domains': 'https://domains.google',
+  'squarespace': 'https://domains.squarespace.com',
+  'squarespace domains': 'https://domains.squarespace.com',
+  'squarespace domains llc': 'https://domains.squarespace.com',
+  'squarespace domains ii llc': 'https://domains.squarespace.com',
+  'amazon': 'https://aws.amazon.com/route53',
+  'amazon registrar': 'https://aws.amazon.com/route53',
+  'amazon registrar, inc.': 'https://aws.amazon.com/route53',
+  'dynadot': 'https://www.dynadot.com',
+  'dynadot, llc': 'https://www.dynadot.com',
+  'dynadot llc': 'https://www.dynadot.com',
+  'porkbun': 'https://www.porkbun.com',
+  'porkbun llc': 'https://www.porkbun.com',
+  'gandi': 'https://www.gandi.net',
+  'gandi sas': 'https://www.gandi.net',
+  'hover': 'https://www.hover.com',
+  'tucows': 'https://www.tucows.com',
+  'tucows domains': 'https://www.tucows.com',
+  'tucows domains inc.': 'https://www.tucows.com',
+  'enom': 'https://www.enom.com',
+  'enom, llc': 'https://www.enom.com',
+  'enom llc': 'https://www.enom.com',
+  'name.com': 'https://www.name.com',
+  'name.com, inc.': 'https://www.name.com',
+  'register.com': 'https://www.register.com',
+  'register.com, inc.': 'https://www.register.com',
+  'network solutions': 'https://www.networksolutions.com',
+  'network solutions, llc': 'https://www.networksolutions.com',
+  'markmonitor': 'https://www.markmonitor.com',
+  'markmonitor inc.': 'https://www.markmonitor.com',
+  'markmonitor, inc.': 'https://www.markmonitor.com',
+  'csc corporate domains': 'https://www.cscglobal.com',
+  'csc corporate domains, inc.': 'https://www.cscglobal.com',
+  'key-systems': 'https://www.key-systems.net',
+  'key-systems gmbh': 'https://www.key-systems.net',
+  'ovh': 'https://www.ovh.com',
+  'ovh sas': 'https://www.ovh.com',
+  'ionos': 'https://www.ionos.com',
+  '1&1 ionos': 'https://www.ionos.com',
+  '1&1 ionos se': 'https://www.ionos.com',
+  'united-domains': 'https://www.united-domains.de',
+  'united-domains ag': 'https://www.united-domains.de',
+  'epik': 'https://www.epik.com',
+  'epik, inc.': 'https://www.epik.com',
+  'epik inc.': 'https://www.epik.com',
+  'njalla': 'https://njal.la',
+  'sav.com': 'https://www.sav.com',
+  'sav.com, llc': 'https://www.sav.com',
+  'spaceship': 'https://www.spaceship.com',
+  'spaceship, inc.': 'https://www.spaceship.com',
+  'namesilo': 'https://www.namesilo.com',
+  'namesilo, llc': 'https://www.namesilo.com',
+  'hostinger': 'https://www.hostinger.com',
+  'hostinger operations': 'https://www.hostinger.com',
+  'rebel': 'https://www.rebel.com',
+  'rebel.com': 'https://www.rebel.com',
+  'inmotion hosting': 'https://www.inmotionhosting.com',
+  'bluehost': 'https://www.bluehost.com',
+  'dreamhost': 'https://www.dreamhost.com',
+  'hostgator': 'https://www.hostgator.com',
+  'siteground': 'https://www.siteground.com',
+  '阿里云': 'https://wanwang.aliyun.com',
+  '万网': 'https://wanwang.aliyun.com',
+  'alibaba': 'https://wanwang.aliyun.com',
+  'alibaba cloud': 'https://wanwang.aliyun.com',
+  'alibaba cloud computing': 'https://wanwang.aliyun.com',
+  'alibaba cloud computing ltd.': 'https://wanwang.aliyun.com',
+  'alibaba cloud computing (beijing) co., ltd.': 'https://wanwang.aliyun.com',
+  'hichina': 'https://wanwang.aliyun.com',
+  'hichina zhicheng': 'https://wanwang.aliyun.com',
+  '腾讯云': 'https://dnspod.cloud.tencent.com',
+  'tencent cloud': 'https://dnspod.cloud.tencent.com',
+  'dnspod': 'https://www.dnspod.cn',
+  '新网': 'https://www.xinnet.com',
+  'xinnet': 'https://www.xinnet.com',
+  'beijing xinnet': 'https://www.xinnet.com',
+  '西部数码': 'https://www.west.cn',
+  'west.cn': 'https://www.west.cn',
+  'chengdu west dimension': 'https://www.west.cn',
+  '爱名网': 'https://www.22.cn',
+  '22.cn': 'https://www.22.cn',
+  '易名': 'https://www.ename.net',
+  'ename': 'https://www.ename.net',
+  'ename technology': 'https://www.ename.net',
+  '华为云': 'https://www.huaweicloud.com',
+  'huawei cloud': 'https://www.huaweicloud.com',
+  '聚名网': 'https://www.juming.com',
+  'juming': 'https://www.juming.com',
+  '美橙互联': 'https://www.cndns.com',
+  'cndns': 'https://www.cndns.com',
+  '中国万网': 'https://wanwang.aliyun.com',
+  '商务中国': 'https://www.bizcn.com',
+  'bizcn': 'https://www.bizcn.com',
+  'onamae': 'https://www.onamae.com',
+  'onamae.com': 'https://www.onamae.com',
+  'gmo': 'https://www.gmo.jp',
+  'gmo internet': 'https://www.gmo.jp',
+  'gmo internet, inc.': 'https://www.gmo.jp',
+  'whois corp.': 'https://www.whois.co.kr',
+  'gabia': 'https://www.gabia.com',
+  'gabia, inc.': 'https://www.gabia.com',
+  'eurodns': 'https://www.eurodns.com',
+  'eurodns s.a.': 'https://www.eurodns.com',
+  'strato': 'https://www.strato.de',
+  'strato ag': 'https://www.strato.de',
+  'netim': 'https://www.netim.com',
+  'netim sarl': 'https://www.netim.com',
+  'infomaniak': 'https://www.infomaniak.com',
+  'internetbs': 'https://internetbs.net',
+  'internet.bs': 'https://internetbs.net',
+  'cleannet.ge': 'https://www.cleannet.ge',
+  'cleannet.ge ltd': 'https://www.cleannet.ge',
+  'caucasus online': 'https://www.caucasus.net',
+  'proservice': 'https://www.proservice.ge',
+  'reg.ru': 'https://www.reg.ru',
+  'regru-ru': 'https://www.reg.ru',
+  'nic.ru': 'https://www.nic.ru',
+  'ru-center': 'https://www.nic.ru',
+  'bigrock': 'https://www.bigrock.in',
+  'resellerclub': 'https://www.resellerclub.com',
+  'publicdomainregistry': 'https://www.publicdomainregistry.com',
+  'pdr ltd': 'https://www.publicdomainregistry.com',
+  'crazy domains': 'https://www.crazydomains.com',
+  'ventraip': 'https://ventraip.com.au',
+  'domain.com': 'https://www.domain.com',
+  'domain.com, llc': 'https://www.domain.com',
+  '101domain': 'https://www.101domain.com',
+  '101domain, inc.': 'https://www.101domain.com',
+  'safenames': 'https://www.safenames.net',
+  'safenames ltd': 'https://www.safenames.net',
+  'encirca': 'https://www.encirca.com',
+  'encirca, inc.': 'https://www.encirca.com',
+  'webnic': 'https://www.webnic.cc',
+  'web commerce communications': 'https://www.webnic.cc',
+};
 
-// 新增：常见 NS 提供商识别映射
 const NS_PROVIDER_MAPPING: Record<string, string> = {
   'cloudflare.net': 'Cloudflare',
   'alidns.com': '阿里云DNS',
@@ -119,22 +260,24 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const getRegistrarUrl = (registrar: string): string | null => {
-    // ...（原函数保留）
     if (!registrar || registrar === 'N/A' || registrar === 'Unknown') return null;
+    
     const registrarLower = registrar.toLowerCase().trim();
+    
     if (REGISTRAR_URLS[registrarLower]) {
       return REGISTRAR_URLS[registrarLower];
     }
+    
     for (const [key, url] of Object.entries(REGISTRAR_URLS)) {
       if (registrarLower.includes(key) || key.includes(registrarLower)) {
         return url;
       }
     }
+    
     return null;
   };
 
   const parseDate = (dateStr: string): Date | null => {
-    // ...（原函数保留）
     if (!dateStr || dateStr === 'N/A') return null;
     const chineseMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
     if (chineseMatch) {
@@ -145,7 +288,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     return null;
   };
 
-  // 新增：隐私保护检测
   const isPrivacyProtected = () => {
     if (!data.registrant) return true;
     const values = Object.values(data.registrant || {}).join(' ').toLowerCase();
@@ -158,7 +300,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     );
   };
 
-  // 新增：解析服务商识别
   const getNsProvider = () => {
     if (!data.nameServers || data.nameServers.length === 0) return null;
     for (const ns of data.nameServers) {
@@ -170,16 +311,16 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     return null;
   };
 
-  // 原有函数全部保留
   const getRegistrationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
     const regDate = parseDate(data.registrationDate);
     if (!regDate) return null;
+    
     const now = new Date();
     const diffTime = now.getTime() - regDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     const diffYears = Math.floor(diffDays / 365);
     const diffMonths = Math.floor((diffDays % 365) / 30);
-
+    
     if (diffDays <= 30) return { text: '新注册', variant: 'destructive' };
     if (diffDays <= 90) return { text: '3月内注册', variant: 'secondary' };
     if (diffDays <= 365) return { text: '1年内注册', variant: 'secondary' };
@@ -194,12 +335,16 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     if (statusStr.includes('pending transfer') || statusStr.includes('pendingtransfer')) {
       return { text: '转移中', variant: 'destructive' };
     }
+    
     const updateDate = parseDate(data.lastUpdated);
     if (!updateDate) return null;
+    
     const now = new Date();
     const diffTime = now.getTime() - updateDate.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays <= 1) return null; // 避免误判为查询时间
+    
+    if (diffDays <= 1) return null;
+    
     if (diffDays <= 7) {
       if (statusStr.includes('transfer')) return { text: '近期转移', variant: 'secondary' };
       return { text: '刚刚续费', variant: 'secondary' };
@@ -212,6 +357,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   const getExpirationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
     const expDate = parseDate(data.expirationDate);
     if (!expDate) return null;
+    
     const now = new Date();
     const diffTime = expDate.getTime() - now.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -221,7 +367,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     if (statusStr.includes('redemption')) return { text: '赎回期', variant: 'destructive' };
     if (statusStr.includes('pending delete') || statusStr.includes('pendingdelete')) return { text: '删除中', variant: 'destructive' };
     if (statusStr.includes('auto renew')) return { text: '自动续费期', variant: 'secondary' };
-
+    
     if (diffDays < 0) {
       const expiredDays = Math.abs(diffDays);
       if (expiredDays <= 30) return { text: `已过期${expiredDays}天`, variant: 'destructive' };
@@ -238,7 +384,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const formatDate = (dateStr: string) => {
-    // ...（原函数保留）
     if (!dateStr || dateStr === 'N/A') return 'N/A';
     if (dateStr.includes('年') && dateStr.includes('月')) {
       return dateStr;
@@ -261,7 +406,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const getStatusChinese = (status: string) => {
-    // ...（原函数保留）
     const cleaned = status.toLowerCase().replace(/https?:\/\/[^\s]+/g, '').trim();
     if (STATUS_MAPPING[cleaned]) return STATUS_MAPPING[cleaned];
     const noSpaces = cleaned.replace(/\s+/g, '');
@@ -275,10 +419,10 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     return lastPart;
   };
 
-  // 原变量保留
   const registrationTag = getRegistrationTag();
   const expirationTag = getExpirationTag();
   const registrarUrl = getRegistrarUrl(data.registrar);
+
   const isQueryTime = (): boolean => {
     const updateDate = parseDate(data.lastUpdated);
     if (!updateDate) return false;
@@ -287,8 +431,10 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     const hoursFromNow = diffTime / (1000 * 60 * 60);
     return hoursFromNow < 2;
   };
+  
   const showAsQueryTime = isQueryTime();
   const updateTag = showAsQueryTime ? null : getUpdateTag();
+
   const hasRegistrantInfo = data.registrant && (
     data.registrant.name || 
     data.registrant.organization || 
@@ -299,11 +445,9 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
     data.registrant.city
   );
 
-  // 新增变量
   const privacyProtected = isPrivacyProtected();
   const nsProvider = getNsProvider();
 
-  // 新增：状态分类
   const clientStatuses = data.status.filter(s => s.toLowerCase().includes('client'));
   const serverStatuses = data.status.filter(s => s.toLowerCase().includes('server'));
   const otherStatuses = data.status.filter(s => !s.toLowerCase().includes('client') && !s.toLowerCase().includes('server'));
@@ -321,7 +465,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
           </div>
 
           <TabsContent value="overview" className="p-6 space-y-6 mt-0">
-            {/* 域名信息 */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold">
@@ -349,7 +492,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                 </div>
               </div>
               <div className="space-y-2">
-                {/* 隐私保护标签 */}
                 {privacyProtected && (
                   <div className="flex items-center gap-2">
                     <Lock className="h-4 w-4 text-green-600" />
@@ -424,7 +566,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
               </div>
             </div>
 
-            {/* 注册人信息 */}
             {hasRegistrantInfo && (
               <div>
                 <h3 className="section-title">
@@ -474,7 +615,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
               </div>
             )}
 
-            {/* 域名状态 */}
             <div>
               <h3 className="section-title">
                 <Shield className="h-4 w-4" />
@@ -529,7 +669,6 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
               </div>
             </div>
 
-            {/* 域名服务器 */}
             {data.nameServers && data.nameServers.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
