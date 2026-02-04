@@ -304,21 +304,36 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   };
 
   const getRegistrationTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
-    const regDate = parseDate(data.registrationDate);
-    if (!regDate) return null;
-    const now = new Date();
-    const diffTime = now.getTime() - regDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffYears = Math.floor(diffDays / 365);
-    const diffMonths = Math.floor((diffDays % 365) / 30);
-    if (diffDays <= 30) return { text: '新注册', variant: 'destructive' };
-    if (diffDays <= 90) return { text: '3月内注册', variant: 'secondary' };
-    if (diffDays <= 365) return { text: '1年内注册', variant: 'secondary' };
-    if (diffYears >= 20) return { text: `${diffYears}年老米`, variant: 'default' };
-    if (diffYears >= 10) return { text: `${diffYears}年${diffMonths}个月老米`, variant: 'default' };
-    if (diffYears >= 5) return { text: `${diffYears}年${diffMonths}个月域名`, variant: 'outline' };
-    return null;
-  };
+  const regDate = parseDate(data.registrationDate);
+  if (!regDate) return null;
+
+  const now = new Date();
+  const diffTime = now.getTime() - regDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const diffYears = Math.floor(diffDays / 365);
+
+  // --- 1. 新生阶段 (1天 - 1年) ---
+  if (diffDays <= 1) return { text: '今日新注', variant: 'destructive' };
+  if (diffDays <= 7) return { text: '本周新注', variant: 'destructive' };
+  if (diffDays <= 31) return { text: '月度新米', variant: 'secondary' };
+  if (diffDays <= 180) return { text: '半年新米', variant: 'secondary' };
+  if (diffDays <= 365) return { text: '周岁稚米', variant: 'secondary' };
+
+  // --- 2. 稳定持有阶段 (1 - 10年) ---
+  if (diffYears < 3) return { text: `${diffYears}年米龄`, variant: 'outline' };
+  if (diffYears < 5) return { text: `${diffYears}年陈米`, variant: 'outline' };
+  if (diffYears < 10) return { text: `${diffYears}年资深`, variant: 'default' };
+
+  // --- 3. 殿堂级阶段 (10 - 30年+) ---
+  if (diffYears < 15) return { text: '十年老牌', variant: 'default' };
+  if (diffYears < 20) return { text: '史诗见证', variant: 'default' };
+  if (diffYears < 25) return { text: '世纪老牌', variant: 'default' };
+  if (diffYears < 30) return { text: '创世老米', variant: 'default' };
+  if (diffYears >= 30) return { text: '创世古董', variant: 'default' };
+
+  return { text: `米龄 ${diffYears}年`, variant: 'outline' };
+};
+
 
   const getUpdateTag = (): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } | null => {
     const statusStr = data.status.join(' ').toLowerCase();
