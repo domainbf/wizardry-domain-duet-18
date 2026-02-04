@@ -1072,7 +1072,7 @@ function parseWhoisText(text: string, domain: string): any {
   const lines = text.split('\n');
   const result: any = { 
     domain,
-    registrar: 'Unknown',
+    registrar: null,
     registrationDate: null,
     expirationDate: null,
     nameServers: [],
@@ -1096,6 +1096,10 @@ function parseWhoisText(text: string, domain: string): any {
     /^sponsoring registrar:\s*(.+)/i,
     /^registrar name:\s*(.+)/i,
     /^registrar organization:\s*(.+)/i,
+    /^registrar company:\s*(.+)/i,
+    /^registrar info:\s*(.+)/i,
+    /^registered by:\s*(.+)/i,
+    /^registered through:\s*(.+)/i,
     /^注册商:\s*(.+)/i,
     /^域名注册商:\s*(.+)/i,
     /^bureau d'enregistrement:\s*(.+)/i,
@@ -1105,6 +1109,13 @@ function parseWhoisText(text: string, domain: string): any {
     /^レジストラ:\s*(.+)/i,
     /^등록대행자:\s*(.+)/i,
     /^регистратор:\s*(.+)/i,
+    // .hu .ge .om specific patterns
+    /^admin-c\/registrar:\s*(.+)/i,
+    /^sponsoring company:\s*(.+)/i,
+    /^domain registrar:\s*(.+)/i,
+    /^provider:\s*(.+)/i,
+    /^reseller:\s*(.+)/i,
+    /^current registrar:\s*(.+)/i,
   ];
   
   const registrarSecondaryPatterns = [
@@ -1160,9 +1171,17 @@ function parseWhoisText(text: string, domain: string): any {
     /initial registration:\s*(.+)/i,
     /nic-creation-date:\s*(.+)/i,
     /domain-created:\s*(.+)/i,
-    // .om 和其他阿拉伯国家格式
+    // .om .hu .ge 和其他国家格式
     /registration\s+date:\s*(.+)/i,
     /reg[.\s]date:\s*(.+)/i,
+    /date registered:\s*(.+)/i,
+    /first registration:\s*(.+)/i,
+    /domain creation date:\s*(.+)/i,
+    /regdate:\s*(.+)/i,
+    /created on\s*:\s*(.+)/i,
+    /domain-reg-date:\s*(.+)/i,
+    /crdate:\s*(.+)/i,
+    /registration\s*:\s*(.+)/i,
   ];
   
   const expirationDatePatterns = [
@@ -1212,8 +1231,16 @@ function parseWhoisText(text: string, domain: string): any {
     /domain validity:\s*(.+)/i,
     /valid to:\s*(.+)/i,
     /expire on:\s*(.+)/i,
-    // .om 格式
+    // .om .hu .ge 和其他格式
     /exp[.\s]date:\s*(.+)/i,
+    /expdate:\s*(.+)/i,
+    /domain expiry date:\s*(.+)/i,
+    /domain-exp-date:\s*(.+)/i,
+    /free-date:\s*(.+)/i,
+    /next renewal:\s*(.+)/i,
+    /next due date:\s*(.+)/i,
+    /valid date:\s*(.+)/i,
+    /domain exp date:\s*(.+)/i,
   ];
   
   // 更新日期模式（排除查询时间模式）
@@ -1243,6 +1270,14 @@ function parseWhoisText(text: string, domain: string): any {
     /fecha de actualización:\s*(.+)/i,
     /data de atualização:\s*(.+)/i,
     /дата обновления:\s*(.+)/i,
+    // 更多格式
+    /last-update:\s*(.+)/i,
+    /update date:\s*(.+)/i,
+    /domain-update-date:\s*(.+)/i,
+    /record updated:\s*(.+)/i,
+    /upd-date:\s*(.+)/i,
+    /last changed:\s*(.+)/i,
+    /mod-date:\s*(.+)/i,
   ];
   
   const nameServerPatterns = [
@@ -1702,6 +1737,12 @@ function formatDate(dateStr: string): string {
       { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{4})/, order: 'mdy' },
       { pattern: /(\d{1,2})-(\d{1,2})-(\d{4})/, order: 'dmy' },
       { pattern: /(\d{1,2})\/(\d{1,2})\/(\d{2})$/, order: 'dmy_short' },
+      // 额外的日期格式
+      { pattern: /(\d{4})\s*-\s*(\d{1,2})\s*-\s*(\d{1,2})/, order: 'ymd' },  // 带空格的 YYYY-MM-DD
+      { pattern: /(\d{2})\.(\d{2})\.(\d{4})/, order: 'dmy' },  // DD.MM.YYYY
+      { pattern: /(\d{4})(\d{2})(\d{2})(?:\d{6})?/, order: 'ymd' },  // YYYYMMDD 或 YYYYMMDDHHMMSS
+      { pattern: /(\d{1,2})\s*\.\s*(\d{1,2})\s*\.\s*(\d{4})/, order: 'dmy' },  // 带空格的 DD.MM.YYYY
+      { pattern: /(\d{4})\s+(\d{1,2})\s+(\d{1,2})/, order: 'ymd' },  // YYYY MM DD (空格分隔)
     ];
     
     for (const { pattern, order } of datePatterns) {
@@ -1860,7 +1901,7 @@ async function performDualLookup(domain: string): Promise<any> {
         if (whoisText && whoisText.length > 20) {
           try {
             const whoisResult = parseWhoisText(whoisText, originalDomain);
-            if (whoisResult && (whoisResult.registrar !== 'Unknown' || 
+            if (whoisResult && (whoisResult.registrar || 
                 whoisResult.registrationDate || whoisResult.nameServers.length > 0)) {
               results.primary = whoisResult;
               console.log(`WHOIS lookup successful for ${originalDomain}`);

@@ -347,7 +347,7 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
   if (statusStr.includes('dispute')) return { text: '法律争议中', variant: 'destructive' };
   if (statusStr.includes('quarantine')) return { text: '隔离保护期', variant: 'destructive' };
   
-  // 针对 Hold 状态（不仅是停止解析，往往意味着未实名或政策限制）
+  // 针对 Hold 状态（不仅是停止解析���往往意味着未实名或政策限制）
   if (statusStr.includes('client hold') || statusStr.includes('clienthold')) return { text: '注册商暂停解析', variant: 'destructive' };
   if (statusStr.includes('server hold') || statusStr.includes('serverhold')) return { text: '注册局禁止解析', variant: 'destructive' };
 
@@ -528,30 +528,34 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="info-row">
-                  <div className="info-row-label">注册商</div>
-                  <div className="info-row-value flex items-center gap-2">
-                    <span>{data.registrar || 'N/A'}</span>
-                    {registrarUrl && (
-                      <Button variant="outline" size="sm" onClick={() => window.open(registrarUrl, '_blank')} className="h-6 px-2 text-xs">
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        官网
-                      </Button>
-                    )}
+                {data.registrar && data.registrar !== 'Unknown' && data.registrar !== 'N/A' && (
+                  <div className="info-row">
+                    <div className="info-row-label">注册商</div>
+                    <div className="info-row-value flex items-center gap-2">
+                      <span>{data.registrar}</span>
+                      {registrarUrl && (
+                        <Button variant="outline" size="sm" onClick={() => window.open(registrarUrl, '_blank')} className="h-6 px-2 text-xs">
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          官网
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="info-row">
-                  <div className="info-row-label">注册时间</div>
-                  <div className="info-row-value flex items-center gap-2">
-                    <span>{formatDate(data.registrationDate)}</span>
-                    {registrationTag && (
-                      <Badge variant={registrationTag.variant} className="text-xs">
-                        {registrationTag.text}
-                      </Badge>
-                    )}
+                )}
+                {data.registrationDate && formatDate(data.registrationDate) !== 'N/A' && (
+                  <div className="info-row">
+                    <div className="info-row-label">注册时间</div>
+                    <div className="info-row-value flex items-center gap-2">
+                      <span>{formatDate(data.registrationDate)}</span>
+                      {registrationTag && (
+                        <Badge variant={registrationTag.variant} className="text-xs">
+                          {registrationTag.text}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {!showAsQueryTime && data.lastUpdated && (
+                )}
+                {!showAsQueryTime && data.lastUpdated && formatDate(data.lastUpdated) !== 'N/A' && (
                   <div className="info-row">
                     <div className="info-row-label">更新时间</div>
                     <div className="info-row-value flex items-center gap-2">
@@ -564,18 +568,20 @@ const DomainResultCard = ({ data, rawData }: DomainResultCardProps) => {
                     </div>
                   </div>
                 )}
-                <div className="info-row">
-                  <div className="info-row-label">过期时间</div>
-                  <div className="info-row-value flex items-center gap-2">
-                    <span>{formatDate(data.expirationDate)}</span>
-                    {expirationTag && (
-                      <Badge variant={expirationTag.variant} className={`text-xs border ${getExpirationBadgeClass()}`}>
-                        {expirationTag.text}
-                      </Badge>
-                    )}
+                {data.expirationDate && formatDate(data.expirationDate) !== 'N/A' && (
+                  <div className="info-row">
+                    <div className="info-row-label">过期时间</div>
+                    <div className="info-row-value flex items-center gap-2">
+                      <span>{formatDate(data.expirationDate)}</span>
+                      {expirationTag && (
+                        <Badge variant={expirationTag.variant} className={`text-xs border ${getExpirationBadgeClass()}`}>
+                          {expirationTag.text}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {showAsQueryTime && data.lastUpdated && (
+                )}
+                {showAsQueryTime && data.lastUpdated && formatDate(data.lastUpdated) !== 'N/A' && (
                   <div className="info-row">
                     <div className="info-row-label flex items-center gap-1">
                       <Clock className="h-3 w-3" />
